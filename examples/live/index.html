@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Streaming Example - VSRCPlayer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .video-container {
+            margin: 20px 0;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-top: 20px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin-top: 20px;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .probe-log {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .probe-log div {
+            padding: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Live Streaming Example</h1>
+    
+    <div class="container">
+        <h2>Live HLS Stream with M3U8 Probing</h2>
+        <div class="info">
+            <strong>Description:</strong> This example demonstrates live streaming with automatic M3U8 probing.
+            The player will probe for the M3U8 file at regular intervals until it becomes available.
+        </div>
+        
+        <div class="warning">
+            <strong>Note:</strong> This example uses a demo HLS stream. The probing feature will activate when
+            configured with a stream that needs to be checked for availability.
+        </div>
+        
+        <div class="video-container">
+            <video id="live-player" class="video-js vjs-default-skin" controls></video>
+        </div>
+        
+        <div class="controls">
+            <button onclick="player.play()">Play</button>
+            <button onclick="player.pause()">Pause</button>
+            <button onclick="changeStream('demo')">Demo Stream</button>
+            <button onclick="changeStream('probe')">Simulate Probing</button>
+        </div>
+        
+        <div class="status" id="status">
+            Status: Initializing...
+        </div>
+        
+        <div class="probe-log" id="probe-log">
+            <strong>Probe Log:</strong>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>About Live Streaming</h2>
+        <p>This example demonstrates live streaming capabilities. Key features:</p>
+        <ul>
+            <li><strong>Automatic M3U8 Probing:</strong> The player can probe for M3U8 files at configurable intervals</li>
+            <li><strong>HLS Support:</strong> Full support for HTTP Live Streaming (HLS) protocol</li>
+            <li><strong>Live UI:</strong> Optimized interface for live content</li>
+            <li><strong>Error Handling:</strong> Graceful handling of stream unavailability</li>
+        </ul>
+        
+        <h3>Configuration Options:</h3>
+        <ul>
+            <li><code>type: 'live'</code> - Enables live streaming mode</li>
+            <li><code>probeInterval: 5000</code> - Probe interval in milliseconds (default: 5000)</li>
+            <li><code>maxProbeAttempts: 12</code> - Maximum probe attempts (default: 12)</li>
+            <li><code>onProbeSuccess</code> - Callback when probe succeeds</li>
+            <li><code>onProbeFailed</code> - Callback when all probe attempts fail</li>
+        </ul>
+        
+        <h3>Code Example:</h3>
+        <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>const player = new VSRCPlayer('#live-player', {
+    type: 'live',
+    src: 'https://example.com/stream/playlist.m3u8',
+    probeInterval: 5000,
+    maxProbeAttempts: 12,
+    onProbeSuccess: (player) => {
+        console.log('Stream found and starting playback');
+    },
+    onProbeFailed: (player) => {
+        console.error('Stream not available after all attempts');
+    }
+});</code></pre>
+    </div>
+
+    <!-- Load the VSRCPlayer library -->
+    <script src="../dist/vsrc-player.js"></script>
+    
+    <script>
+        let player;
+        let probeLogElement = document.getElementById('probe-log');
+        
+        function addProbeLog(message) {
+            const logEntry = document.createElement('div');
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            probeLogElement.appendChild(logEntry);
+            probeLogElement.scrollTop = probeLogElement.scrollHeight;
+        }
+
+        // Initialize the player with a working HLS stream
+        player = new VSRCPlayer('#live-player', {
+            type: 'live',
+            // Using a demo HLS stream
+            src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+            probeInterval: 3000,
+            maxProbeAttempts: 10,
+            onReady: (playerInstance) => {
+                console.log('VSRCPlayer is ready');
+                updateStatus('Ready - Player initialized');
+                addProbeLog('Player initialized');
+            },
+            onError: (error) => {
+                console.error('Error occurred', error);
+                updateStatus('Error: ' + (error.message || 'Unknown error'));
+                addProbeLog('Error: ' + (error.message || 'Unknown error'));
+            },
+            onProbeSuccess: (playerInstance) => {
+                updateStatus('Stream found - Starting playback');
+                addProbeLog('✓ Stream found! Starting playback...');
+            },
+            onProbeFailed: (playerInstance) => {
+                updateStatus('Stream not available after maximum attempts');
+                addProbeLog('✗ Stream not available after all probe attempts');
+            }
+        });
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = 'Status: ' + message;
+        }
+
+        function changeStream(type) {
+            if (player) {
+                player.dispose();
+            }
+            
+            probeLogElement.innerHTML = '<strong>Probe Log:</strong>';
+            
+            if (type === 'demo') {
+                addProbeLog('Loading demo stream...');
+                player = new VSRCPlayer('#live-player', {
+                    type: 'live',
+                    src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+                    onReady: () => {
+                        updateStatus('Demo stream loaded');
+                        addProbeLog('Demo stream loaded successfully');
+                    }
+                });
+            } else if (type === 'probe') {
+                addProbeLog('Simulating probe scenario...');
+                addProbeLog('This would probe a stream URL at regular intervals');
+                updateStatus('Probing simulation (see log)');
+                
+                // Simulate probe attempts
+                let attempts = 0;
+                const maxAttempts = 5;
+                const interval = setInterval(() => {
+                    attempts++;
+                    addProbeLog(`Probe attempt ${attempts}/${maxAttempts}...`);
+                    
+                    if (attempts >= maxAttempts) {
+                        clearInterval(interval);
+                        addProbeLog('✓ Stream found (simulated)');
+                        updateStatus('Stream found (simulated)');
+                        
+                        // Load actual stream
+                        player = new VSRCPlayer('#live-player', {
+                            type: 'live',
+                            src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+                            onReady: () => {
+                                addProbeLog('Playback started');
+                            }
+                        });
+                    }
+                }, 2000);
+            }
+        }
+
+        // Update status periodically
+        setInterval(() => {
+            if (player && player.isPlaying()) {
+                updateStatus('Playing (Live)');
+            }
+        }, 1000);
+    </script>
+</body>
+</html>
