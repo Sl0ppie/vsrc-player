@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Chat Example - VSRCPlayer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .player-chat-container {
+            display: flex;
+            gap: 20px;
+            height: 600px;
+            background-color: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .video-wrapper {
+            flex: 1;
+            min-width: 0;
+        }
+        .chat-wrapper {
+            width: 340px;
+            flex-shrink: 0;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-top: 20px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            padding: 15px;
+            border-left: 4px solid #ffc107;
+            margin-top: 20px;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #545b62;
+        }
+        .config-section {
+            margin-top: 20px;
+        }
+        .config-group {
+            margin-bottom: 15px;
+        }
+        .config-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .config-group input {
+            width: 100%;
+            max-width: 300px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .color-picker-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .color-picker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .color-picker label {
+            flex: 1;
+            font-size: 12px;
+        }
+        .color-picker input[type="color"] {
+            width: 50px;
+            height: 30px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 968px) {
+            .player-chat-container {
+                flex-direction: column;
+                height: auto;
+            }
+            .video-wrapper {
+                height: 400px;
+            }
+            .chat-wrapper {
+                width: 100%;
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>🎬 Live Chat Example</h1>
+    <p class="subtitle">VSRCPlayer with real-time WebSocket chat</p>
+    
+    <div class="container">
+        <h2>Live Stream with Chat</h2>
+        <div class="info">
+            <strong>Description:</strong> This example demonstrates VSRCPlayer with an integrated live chat feature.
+            The chat uses WebSockets for real-time messaging and features a configurable color palette.
+        </div>
+        
+        <div class="warning">
+            <strong>Note:</strong> Make sure the chat backend server is running on port 8080.
+            Run <code>cd chat_backend && npm install && npm start</code> from the project root.
+        </div>
+        
+        <div class="player-chat-container">
+            <div class="video-wrapper">
+                <video id="chat-player" class="video-js vjs-default-skin" controls style="width: 100%; height: 100%;"></video>
+            </div>
+            <div class="chat-wrapper" id="chat-container">
+                <!-- Chat will be inserted here -->
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button onclick="player.play()">Play Video</button>
+            <button onclick="player.pause()">Pause Video</button>
+            <button onclick="chat.clearMessages()" class="secondary">Clear Chat</button>
+            <button onclick="sendTestMessage()">Send Test Message</button>
+        </div>
+        
+        <div class="status" id="status">
+            Status: Initializing...
+        </div>
+    </div>
+
+    <div class="container config-section">
+        <h2>Configuration</h2>
+        
+        <div class="config-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" value="User123" onchange="updateUsername()">
+        </div>
+        
+        <div class="config-group">
+            <label for="wsUrl">WebSocket Server URL:</label>
+            <input type="text" id="wsUrl" value="ws://localhost:8080" readonly>
+            <small style="display: block; margin-top: 5px; color: #666;">
+                To change the server URL, modify the chat initialization code
+            </small>
+        </div>
+        
+        <h3>Color Palette</h3>
+        <p style="font-size: 14px; color: #666; margin-bottom: 15px;">
+            Customize the chat appearance by changing the colors below:
+        </p>
+        
+        <div class="color-picker-group">
+            <div class="color-picker">
+                <label>Background:</label>
+                <input type="color" id="colorBackground" value="#1f1f1f" onchange="updateColors()">
+            </div>
+            <div class="color-picker">
+                <label>Input Background:</label>
+                <input type="color" id="colorInputBg" value="#2a2a2a" onchange="updateColors()">
+            </div>
+            <div class="color-picker">
+                <label>User Message:</label>
+                <input type="color" id="colorUserMsg" value="#0e4c92" onchange="updateColors()">
+            </div>
+            <div class="color-picker">
+                <label>Other Message:</label>
+                <input type="color" id="colorOtherMsg" value="#2a2a2a" onchange="updateColors()">
+            </div>
+            <div class="color-picker">
+                <label>System Message:</label>
+                <input type="color" id="colorSystemMsg" value="#666666" onchange="updateColors()">
+            </div>
+            <div class="color-picker">
+                <label>Text:</label>
+                <input type="color" id="colorText" value="#ffffff" onchange="updateColors()">
+            </div>
+            <div class="color-picker">
+                <label>Border:</label>
+                <input type="color" id="colorBorder" value="#3a3a3a" onchange="updateColors()">
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>About This Example</h2>
+        <p>This example showcases:</p>
+        <ul>
+            <li><strong>Real-time Chat:</strong> WebSocket-based messaging for live interaction</li>
+            <li><strong>Configurable Colors:</strong> Customize the chat appearance to match your brand</li>
+            <li><strong>Responsive Layout:</strong> Video and chat adapt to different screen sizes</li>
+            <li><strong>User Management:</strong> Customizable username and user notifications</li>
+            <li><strong>Auto-reconnect:</strong> Automatically reconnects if connection is lost</li>
+        </ul>
+        
+        <h3>Code Example:</h3>
+        <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>// Initialize the video player
+const player = new VSRCPlayer('#chat-player', {
+    type: 'live',
+    src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    onReady: (player) => {
+        console.log('Player ready');
+    }
+});
+
+// Initialize the chat
+const chat = new VSRCChat('#chat-container', {
+    serverUrl: 'ws://localhost:8080',
+    username: 'User123',
+    colors: {
+        background: '#1f1f1f',
+        inputBackground: '#2a2a2a',
+        userMessage: '#0e4c92',
+        otherMessage: '#2a2a2a',
+        systemMessage: '#666',
+        text: '#ffffff',
+        border: '#3a3a3a'
+    },
+    onMessage: (data) => {
+        console.log('New message:', data);
+    },
+    onConnect: () => {
+        console.log('Connected to chat');
+    }
+});</code></pre>
+    </div>
+
+    <div class="container">
+        <h2>Setup Instructions</h2>
+        <ol>
+            <li>Navigate to the <code>chat_backend</code> directory</li>
+            <li>Run <code>npm install</code> to install dependencies</li>
+            <li>Run <code>npm start</code> to start the WebSocket server (default port: 8080)</li>
+            <li>Open this HTML file in multiple browser windows to test the chat</li>
+            <li>Messages sent in one window will appear in all other windows</li>
+        </ol>
+        
+        <h3>Customization</h3>
+        <p>You can customize the chat by:</p>
+        <ul>
+            <li>Changing the color palette using the color pickers above</li>
+            <li>Modifying the username</li>
+            <li>Adjusting the layout by changing CSS styles</li>
+            <li>Extending the WebSocket server to add features like message history, user authentication, etc.</li>
+        </ul>
+    </div>
+
+    <!-- Load the VSRCPlayer library -->
+    <script src="../../dist/vsrc-player.js"></script>
+    
+    <!-- Load the VSRCChat library -->
+    <script src="../../src/vsrc-chat.js"></script>
+    
+    <script>
+        let player;
+        let chat;
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = 'Status: ' + message;
+        }
+
+        // Initialize the video player
+        player = new VSRCPlayer('#chat-player', {
+            type: 'live',
+            src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+            onReady: (playerInstance) => {
+                console.log('VSRCPlayer is ready');
+                updateStatus('Player ready - Chat initializing...');
+            },
+            onError: (error) => {
+                console.error('Player error:', error);
+                updateStatus('Player error: ' + (error.message || 'Unknown error'));
+            }
+        });
+
+        // Initialize the chat
+        chat = new VSRCChat('#chat-container', {
+            serverUrl: 'ws://localhost:8080',
+            username: document.getElementById('username').value,
+            colors: {
+                background: '#1f1f1f',
+                inputBackground: '#2a2a2a',
+                userMessage: '#0e4c92',
+                otherMessage: '#2a2a2a',
+                systemMessage: '#666',
+                text: '#ffffff',
+                border: '#3a3a3a'
+            },
+            onMessage: (data) => {
+                console.log('New message:', data);
+            },
+            onConnect: () => {
+                console.log('Connected to chat server');
+                updateStatus('Ready - Player and chat connected');
+            },
+            onDisconnect: () => {
+                console.log('Disconnected from chat server');
+                updateStatus('Chat disconnected - Attempting to reconnect...');
+            }
+        });
+
+        // Update username
+        function updateUsername() {
+            const newUsername = document.getElementById('username').value;
+            chat.setUsername(newUsername);
+            console.log('Username updated to:', newUsername);
+        }
+
+        // Update colors
+        function updateColors() {
+            const colors = {
+                background: document.getElementById('colorBackground').value,
+                inputBackground: document.getElementById('colorInputBg').value,
+                userMessage: document.getElementById('colorUserMsg').value,
+                otherMessage: document.getElementById('colorOtherMsg').value,
+                systemMessage: document.getElementById('colorSystemMsg').value,
+                text: document.getElementById('colorText').value,
+                border: document.getElementById('colorBorder').value
+            };
+            
+            chat.updateColors(colors);
+            console.log('Colors updated:', colors);
+        }
+
+        // Send a test message
+        function sendTestMessage() {
+            const testMessages = [
+                'Hello everyone! 👋',
+                'This chat is awesome!',
+                'Great stream!',
+                'Anyone else watching?',
+                'The quality is amazing!'
+            ];
+            
+            const randomMessage = testMessages[Math.floor(Math.random() * testMessages.length)];
+            chat.sendMessage(randomMessage);
+        }
+    </script>
+</body>
+</html>
