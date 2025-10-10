@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Features - VSRCPlayer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .video-container {
+            margin: 20px 0;
+        }
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #545b62;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-top: 20px;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .control-group {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .control-group h3 {
+            margin-top: 0;
+        }
+        input[type="range"] {
+            width: 200px;
+        }
+        .info-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-card {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #007bff;
+        }
+        .info-card h4 {
+            margin-top: 0;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <h1>Advanced Features Demo</h1>
+    
+    <div class="container">
+        <h2>Full-Featured Player</h2>
+        <div class="info">
+            <strong>Description:</strong> This example showcases advanced features and API methods
+            available in VSRCPlayer. Experiment with different controls to see the player's capabilities.
+        </div>
+        
+        <div class="video-container">
+            <video id="advanced-player" class="video-js vjs-default-skin" controls></video>
+        </div>
+        
+        <div class="control-group">
+            <h3>Playback Controls</h3>
+            <div class="controls">
+                <button onclick="player.play()">▶ Play</button>
+                <button onclick="player.pause()">⏸ Pause</button>
+                <button onclick="player.seek(0)">⏮ Restart</button>
+                <button onclick="seekRelative(-10)">⏪ -10s</button>
+                <button onclick="seekRelative(10)">⏩ +10s</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3>Volume Controls</h3>
+            <div class="controls">
+                <button onclick="player.volume(0)">🔇 Mute</button>
+                <button onclick="player.volume(0.25)">25%</button>
+                <button onclick="player.volume(0.5)">50%</button>
+                <button onclick="player.volume(0.75)">75%</button>
+                <button onclick="player.volume(1.0)">100%</button>
+                <div>
+                    <label for="volumeSlider">Custom: </label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="100" 
+                           oninput="player.volume(this.value/100); updateVolumeDisplay()">
+                    <span id="volumeDisplay">100%</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3>Video Sources</h3>
+            <div class="controls">
+                <button onclick="changeVideo('bigbuck')">Big Buck Bunny</button>
+                <button onclick="changeVideo('tears')">Tears of Steel</button>
+                <button onclick="changeVideo('hls')">HLS Stream</button>
+            </div>
+        </div>
+        
+        <div class="control-group">
+            <h3>Advanced Actions</h3>
+            <div class="controls">
+                <button class="secondary" onclick="getPlayerInfo()">Get Player Info</button>
+                <button class="secondary" onclick="toggleFullscreen()">Toggle Fullscreen</button>
+                <button class="secondary" onclick="restartPlayer()">Restart Player</button>
+            </div>
+        </div>
+        
+        <div class="status" id="status">
+            Status: Initializing...
+        </div>
+        
+        <div class="info-display" id="playerInfo">
+            <div class="info-card">
+                <h4>Current Time</h4>
+                <p id="currentTime">0s</p>
+            </div>
+            <div class="info-card">
+                <h4>Duration</h4>
+                <p id="duration">0s</p>
+            </div>
+            <div class="info-card">
+                <h4>Volume</h4>
+                <p id="volume">100%</p>
+            </div>
+            <div class="info-card">
+                <h4>Playing</h4>
+                <p id="playing">No</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>Feature Highlights</h2>
+        <ul>
+            <li><strong>Multiple Format Support:</strong> MP4, WebM, HLS (M3U8)</li>
+            <li><strong>Dynamic Source Switching:</strong> Change video sources on the fly</li>
+            <li><strong>Volume Control:</strong> Programmatic and UI-based volume adjustment</li>
+            <li><strong>Seek Controls:</strong> Jump to specific times or seek relative to current position</li>
+            <li><strong>Player State Access:</strong> Query current playback state, time, volume, etc.</li>
+            <li><strong>Event Handling:</strong> Custom callbacks for ready, error, and other events</li>
+            <li><strong>Responsive Design:</strong> Fluid player that adapts to container size</li>
+            <li><strong>Fullscreen Support:</strong> Native fullscreen API integration</li>
+        </ul>
+        
+        <h3>API Methods Demonstrated:</h3>
+        <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>// Playback control
+player.play()
+player.pause()
+player.seek(seconds)
+
+// Volume control
+player.volume(level)  // Set (0-1)
+player.volume()       // Get
+
+// State queries
+player.currentTime()
+player.isPlaying()
+player.getPlayer()    // Access underlying video.js instance
+
+// Source management
+player.setSource(src, type)
+
+// Cleanup
+player.dispose()
+</code></pre>
+    </div>
+
+    <!-- Load the VSRCPlayer library -->
+    <script src="../../dist/vsrc-player.js"></script>
+    
+    <script>
+        let player;
+        
+        // Video sources
+        const videos = {
+            bigbuck: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            tears: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+            hls: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+        };
+
+        // Initialize the player
+        function initPlayer(src, type = 'vod') {
+            player = new VSRCPlayer('#advanced-player', {
+                type: type,
+                src: src,
+                onReady: (playerInstance) => {
+                    console.log('VSRCPlayer is ready');
+                    updateStatus('Ready - Video loaded');
+                },
+                onError: (error) => {
+                    console.error('Error occurred', error);
+                    updateStatus('Error: ' + (error.message || 'Unknown error'));
+                }
+            });
+        }
+
+        // Initialize with default video
+        initPlayer(videos.bigbuck);
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = 'Status: ' + message;
+        }
+
+        function seekRelative(seconds) {
+            const currentTime = player.currentTime();
+            player.seek(currentTime + seconds);
+        }
+
+        function updateVolumeDisplay() {
+            const volume = Math.round(player.volume() * 100);
+            document.getElementById('volumeSlider').value = volume;
+            document.getElementById('volumeDisplay').textContent = volume + '%';
+        }
+
+        function changeVideo(videoKey) {
+            const src = videos[videoKey];
+            const type = videoKey === 'hls' ? 'live' : 'vod';
+            
+            // Dispose old player
+            if (player) {
+                player.dispose();
+            }
+            
+            // Create new player
+            initPlayer(src, type);
+            updateStatus(`Loading ${videoKey}...`);
+        }
+
+        function getPlayerInfo() {
+            const info = {
+                currentTime: player.currentTime(),
+                volume: player.volume(),
+                isPlaying: player.isPlaying()
+            };
+            
+            console.log('Player Info:', info);
+            alert(`Player Info:\nCurrent Time: ${info.currentTime.toFixed(2)}s\nVolume: ${Math.round(info.volume * 100)}%\nPlaying: ${info.isPlaying}`);
+        }
+
+        function toggleFullscreen() {
+            const vjsPlayer = player.getPlayer();
+            if (vjsPlayer) {
+                if (vjsPlayer.isFullscreen()) {
+                    vjsPlayer.exitFullscreen();
+                } else {
+                    vjsPlayer.requestFullscreen();
+                }
+            }
+        }
+
+        function restartPlayer() {
+            const currentSrc = player.getPlayer().currentSrc();
+            player.dispose();
+            
+            // Determine type from source
+            const type = currentSrc.includes('.m3u8') ? 'live' : 'vod';
+            initPlayer(currentSrc, type);
+        }
+
+        // Update info display periodically
+        setInterval(() => {
+            if (player && player.getPlayer()) {
+                document.getElementById('currentTime').textContent = 
+                    player.currentTime().toFixed(2) + 's';
+                
+                const vjsPlayer = player.getPlayer();
+                const duration = vjsPlayer.duration();
+                document.getElementById('duration').textContent = 
+                    (isFinite(duration) ? duration.toFixed(2) : '∞') + 's';
+                
+                document.getElementById('volume').textContent = 
+                    Math.round(player.volume() * 100) + '%';
+                
+                document.getElementById('playing').textContent = 
+                    player.isPlaying() ? 'Yes' : 'No';
+            }
+        }, 500);
+    </script>
+</body>
+</html>

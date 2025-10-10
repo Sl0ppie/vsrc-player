@@ -1,0 +1,25 @@
+{
+  "name": "vsrc-player",
+  "version": "1.0.0",
+  "description": "HTML5 video player wrapping video.js with support for VOD and live streaming",
+  "main": "dist/vsrc-player.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "dev": "webpack serve --mode development --open",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": ["video", "player", "videojs", "hls", "streaming", "vod", "live"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@videojs/http-streaming": "^3.17.2",
+    "video.js": "^8.23.4"
+  },
+  "devDependencies": {
+    "css-loader": "^7.1.2",
+    "style-loader": "^4.0.0",
+    "webpack": "^5.102.1",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  }
+}

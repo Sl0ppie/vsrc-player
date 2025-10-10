@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VOD Example - VSRCPlayer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .video-container {
+            margin: 20px 0;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-top: 20px;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>VOD (Video on Demand) Example</h1>
+    
+    <div class="container">
+        <h2>Basic VOD Playback</h2>
+        <div class="info">
+            <strong>Description:</strong> This example demonstrates basic VOD playback using VSRCPlayer.
+            The player is configured to play an MP4 video file.
+        </div>
+        
+        <div class="video-container">
+            <video id="vod-player" class="video-js vjs-default-skin" controls></video>
+        </div>
+        
+        <div class="controls">
+            <button onclick="player.play()">Play</button>
+            <button onclick="player.pause()">Pause</button>
+            <button onclick="player.seek(0)">Restart</button>
+            <button onclick="player.volume(0.5)">Volume 50%</button>
+            <button onclick="player.volume(1.0)">Volume 100%</button>
+        </div>
+        
+        <div class="status" id="status">
+            Status: Initializing...
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>About This Example</h2>
+        <p>This example shows a basic VOD setup. Key features:</p>
+        <ul>
+            <li>Automatic video type detection</li>
+            <li>Standard video controls</li>
+            <li>Programmatic control via JavaScript API</li>
+            <li>Responsive player sizing</li>
+        </ul>
+        
+        <h3>Code Example:</h3>
+        <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>const player = new VSRCPlayer('#vod-player', {
+    type: 'vod',
+    src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+    onReady: (player) => {
+        console.log('Player is ready');
+    },
+    onError: (error) => {
+        console.error('Error occurred', error);
+    }
+});</code></pre>
+    </div>
+
+    <!-- Load the VSRCPlayer library -->
+    <script src="../../dist/vsrc-player.js"></script>
+    
+    <script>
+        // Initialize the player
+        const player = new VSRCPlayer('#vod-player', {
+            type: 'vod',
+            src: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            onReady: (playerInstance) => {
+                console.log('VSRCPlayer is ready');
+                updateStatus('Ready - Video loaded successfully');
+            },
+            onError: (error) => {
+                console.error('Error occurred', error);
+                updateStatus('Error: ' + error.message);
+            }
+        });
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = 'Status: ' + message;
+        }
+
+        // Update status periodically
+        setInterval(() => {
+            if (player.isPlaying()) {
+                const currentTime = Math.floor(player.currentTime());
+                updateStatus(`Playing - Current time: ${currentTime}s`);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

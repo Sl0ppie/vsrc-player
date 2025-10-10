@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSRCPlayer Examples</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .examples-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .example-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            display: block;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .example-card h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .example-card p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .example-card .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .features {
+            margin-top: 40px;
+            padding: 30px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .features h2 {
+            margin-top: 0;
+        }
+        .features ul {
+            list-style: none;
+            padding: 0;
+        }
+        .features li {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .features li:last-child {
+            border-bottom: none;
+        }
+        .features li:before {
+            content: "✓ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 VSRCPlayer Examples</h1>
+        <p class="subtitle">Explore different use cases and features of the VSRCPlayer library</p>
+        
+        <div class="examples-grid">
+            <a href="vod/index.html" class="example-card">
+                <div class="icon">📹</div>
+                <h2>VOD Example</h2>
+                <p>Video on Demand playback with standard controls and features. Learn the basics of VOD playback.</p>
+            </a>
+            
+            <a href="live/index.html" class="example-card">
+                <div class="icon">📡</div>
+                <h2>Live Streaming</h2>
+                <p>Live HLS streaming with automatic M3U8 probing. See how the player handles live content.</p>
+            </a>
+            
+            <a href="advanced/index.html" class="example-card">
+                <div class="icon">⚙️</div>
+                <h2>Advanced Features</h2>
+                <p>Comprehensive demonstration of all API methods and advanced capabilities of VSRCPlayer.</p>
+            </a>
+        </div>
+        
+        <div class="features">
+            <h2>Key Features</h2>
+            <ul>
+                <li><strong>Built on video.js:</strong> Leverages the power and reliability of video.js</li>
+                <li><strong>VOD Support:</strong> Full support for Video on Demand content in multiple formats</li>
+                <li><strong>Live Streaming:</strong> HLS (HTTP Live Streaming) support with M3U8 probing</li>
+                <li><strong>Automatic Probing:</strong> Configurable probing intervals for live streams</li>
+                <li><strong>Rich API:</strong> Comprehensive JavaScript API for programmatic control</li>
+                <li><strong>Responsive Design:</strong> Fluid player that adapts to any screen size</li>
+                <li><strong>Event Callbacks:</strong> Custom callbacks for ready, error, probe success/failure</li>
+                <li><strong>Easy Integration:</strong> Simple initialization and configuration</li>
+            </ul>
+        </div>
+        
+        <div class="features">
+            <h2>Quick Start</h2>
+            <p>To use VSRCPlayer in your project:</p>
+            <pre style="background-color: white; padding: 15px; border-radius: 4px; overflow-x: auto; border: 1px solid #ddd;"><code>&lt;!-- Include the library --&gt;
+&lt;script src="dist/vsrc-player.js"&gt;&lt;/script&gt;
+
+&lt;!-- Create a video element --&gt;
+&lt;video id="my-player" class="video-js"&gt;&lt;/video&gt;
+
+&lt;!-- Initialize the player --&gt;
+&lt;script&gt;
+  const player = new VSRCPlayer('#my-player', {
+    type: 'vod',
+    src: 'path/to/video.mp4',
+    onReady: (player) => {
+      console.log('Player ready!');
+    }
+  });
+&lt;/script&gt;</code></pre>
+        </div>
+    </div>
+</body>
+</html>
