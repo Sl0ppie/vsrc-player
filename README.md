@@ -8,6 +8,7 @@ An HTML5 video player built on top of video.js, with enhanced support for both V
 - 📡 **Live Streaming** - HLS (HTTP Live Streaming) with automatic M3U8 probing
 - 🔄 **Smart Probing** - Automatically probe for M3U8 files at configurable intervals
 - 💬 **Live Chat** - WebSocket-based real-time chat with configurable color palette
+- 📊 **Built-in Analytics** - Automatic event tracking to api.vsrc.video (always enabled)
 - 🎯 **Easy API** - Simple, intuitive JavaScript API
 - 📱 **Responsive** - Fluid player that adapts to any screen size
 - ⚡ **Event-Driven** - Rich callback system for lifecycle events
@@ -70,6 +71,8 @@ const player = new VSRCPlayer('#my-player', {
 const player = new VSRCPlayer('#my-player', {
     type: 'live',
     src: 'https://example.com/stream/playlist.m3u8',
+    userId: 'user-123',           // Optional: for analytics tracking
+    mediaId: 'video-456',         // Optional: for analytics tracking
     chat: {
         element: '#chat-container',
         serverUrl: 'ws://localhost:8080',
@@ -114,12 +117,36 @@ npm start  # Starts WebSocket server on port 8080
 |--------|------|---------|-------------|
 | `type` | string | `'vod'` | Player type: `'vod'` or `'live'` |
 | `src` | string | `''` | Video source URL |
+| `userId` | string | `undefined` | User ID for analytics tracking (optional) |
+| `mediaId` | string | `undefined` | Media/video ID for analytics tracking (optional) |
 | `probeInterval` | number | `5000` | Probe interval in milliseconds (live only) |
 | `maxProbeAttempts` | number | `12` | Maximum probe attempts (live only) |
 | `onReady` | function | `null` | Callback when player is ready |
 | `onError` | function | `null` | Callback when error occurs |
 | `onProbeSuccess` | function | `null` | Callback when M3U8 probe succeeds |
 | `onProbeFailed` | function | `null` | Callback when all probe attempts fail |
+
+## Analytics
+
+VSRCPlayer includes built-in analytics tracking that is **always enabled** and sends data to `api.vsrc.video`. The following events are automatically tracked:
+
+- **play** - When video playback starts
+- **pause** - When video is paused
+- **seek** - When user seeks to a different position
+- **ended** - When video playback completes
+- **error** - When a playback error occurs
+- **buffer** - When video buffering occurs
+
+Analytics data includes:
+- Session ID (automatically generated)
+- User ID (if provided via `userId` option)
+- Media ID (if provided via `mediaId` option)
+- Event type
+- Current playback time
+- Video duration
+- Error messages (for error events)
+
+**Note:** Analytics cannot be disabled and is a core feature of the player.
 
 ## API Methods
 

@@ -2,6 +2,136 @@ import videojs from 'video.js';
 import 'video.js/dist/video-js.css';
 
 /**
+ * AnalyticsReporter - Handles analytics event tracking and reporting
+ * Always enabled, cannot be disabled, sends to api.vsrc.video
+ */
+class AnalyticsReporter {
+  constructor(userId, mediaId) {
+    this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    this.userId = userId;
+    this.mediaId = mediaId;
+    this.wsUrl = 'wss://api.vsrc.video/ws/analytics';
+    this.ajaxUrl = 'https://api.vsrc.video/api/analytics/event';
+    this.ws = null;
+    this.eventQueue = [];
+    this.batchInterval = 5000; // 5 seconds
+    this.batchSize = 10;
+    this.batchTimer = null;
+    
+    this._initWebSocket();
+    this._startBatchTimer();
+  }
+  
+  _initWebSocket() {
+    try {
+      this.ws = new WebSocket(this.wsUrl);
+      
+      this.ws.onopen = () => {
+        console.log('VSRCPlayer Analytics: WebSocket connected');
+        this._flushQueue();
+      };
+      
+      this.ws.onerror = (error) => {
+        console.log('VSRCPlayer Analytics: WebSocket error, using AJAX fallback');
+      };
+      
+      this.ws.onclose = () => {
+        console.log('VSRCPlayer Analytics: WebSocket closed');
+        this.ws = null;
+        // Try to reconnect after 5 seconds
+        setTimeout(() => this._initWebSocket(), 5000);
+      };
+    } catch (error) {
+      console.error('VSRCPlayer Analytics: Failed to initialize WebSocket:', error);
+      this.ws = null;
+    }
+  }
+  
+  _startBatchTimer() {
+    this.batchTimer = setInterval(() => {
+      if (this.eventQueue.length > 0) {
+        this._flushQueue();
+      }
+    }, this.batchInterval);
+  }
+  
+  _flushQueue() {
+    if (this.eventQueue.length === 0) return;
+    
+    const events = [...this.eventQueue];
+    this.eventQueue = [];
+    
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({
+        type: 'batch',
+        payload: { events }
+      }));
+    } else {
+      // Send via AJAX
+      events.forEach(event => this._sendViaAjax(event));
+    }
+  }
+  
+  async _sendViaAjax(event) {
+    try {
+      await fetch(this.ajaxUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(event),
+      });
+    } catch (error) {
+      console.error('VSRCPlayer Analytics: Failed to send event via AJAX:', error);
+    }
+  }
+  
+  track(eventType, data = {}) {
+    const event = {
+      sessionId: this.sessionId,
+      userId: this.userId,
+      mediaId: this.mediaId,
+      eventType,
+      currentTime: data.currentTime,
+      duration: data.duration,
+      quality: data.quality,
+      bufferDuration: data.bufferDuration,
+      errorMessage: data.errorMessage,
+      metadata: data.metadata,
+    };
+    
+    // Critical events are sent immediately
+    const criticalEvents = ['error', 'ended'];
+    if (criticalEvents.includes(eventType)) {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'event', payload: event }));
+      } else {
+        this._sendViaAjax(event);
+      }
+    } else {
+      // Non-critical events are batched
+      this.eventQueue.push(event);
+      if (this.eventQueue.length >= this.batchSize) {
+        this._flushQueue();
+      }
+    }
+  }
+  
+  destroy() {
+    if (this.batchTimer) {
+      clearInterval(this.batchTimer);
+      this.batchTimer = null;
+    }
+    
+    // Flush any remaining events
+    this._flushQueue();
+    
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+}
+
+/**
  * VSRCPlayer - A wrapper around video.js with additional features
  * Supports both VOD (Video on Demand) and live streaming
  */
@@ -18,11 +148,14 @@ class VSRCPlayer {
    * @param {Function} options.onError - Callback when error occurs
    * @param {Function} options.onProbeSuccess - Callback when m3u8 probe succeeds
    * @param {Function} options.onProbeFailed - Callback when m3u8 probe fails
+   * @param {string} options.userId - User ID for analytics (optional)
+   * @param {string} options.mediaId - Media/video ID for analytics (optional)
    * @param {Object|boolean} options.chat - Chat configuration or false to disable
    * @param {string|Element} options.chat.element - Chat container element or selector
    * @param {string} options.chat.serverUrl - WebSocket server URL
    * @param {string} options.chat.username - Username for chat
    * @param {Object} options.chat.colors - Chat color palette
+   * @note Analytics is always enabled and sends data to api.vsrc.video
    */
   constructor(element, options = {}) {
     this.element = typeof element === 'string' ? document.querySelector(element) : element;
@@ -36,11 +169,14 @@ class VSRCPlayer {
       onProbeSuccess: options.onProbeSuccess || (() => {}),
       onProbeFailed: options.onProbeFailed || (() => {}),
       chat: options.chat || false,
+      userId: options.userId,
+      mediaId: options.mediaId,
       ...options
     };
 
     this.player = null;
     this.chat = null;
+    this.analytics = null;
     this.probeTimer = null;
     this.probeAttempts = 0;
     this.isProbing = false;
@@ -68,6 +204,9 @@ class VSRCPlayer {
     this.player = videojs(this.element, vjsOptions, () => {
       console.log('VSRCPlayer: Player initialized');
       
+      // Initialize analytics (always enabled)
+      this._initAnalytics();
+      
       // Initialize chat if configured
       if (this.options.chat) {
         this._initChat();
@@ -89,6 +228,67 @@ class VSRCPlayer {
       // For VOD, just set the source
       this.setSource(this.options.src);
     }
+  }
+
+  /**
+   * Initialize analytics tracking (always enabled)
+   * @private
+   */
+  _initAnalytics() {
+    // Create analytics reporter
+    this.analytics = new AnalyticsReporter(this.options.userId, this.options.mediaId);
+    
+    // Track play event
+    this.player.on('play', () => {
+      this.analytics.track('play', {
+        currentTime: this.player.currentTime(),
+        duration: this.player.duration(),
+      });
+    });
+    
+    // Track pause event
+    this.player.on('pause', () => {
+      this.analytics.track('pause', {
+        currentTime: this.player.currentTime(),
+        duration: this.player.duration(),
+      });
+    });
+    
+    // Track seek event
+    this.player.on('seeked', () => {
+      this.analytics.track('seek', {
+        currentTime: this.player.currentTime(),
+        duration: this.player.duration(),
+      });
+    });
+    
+    // Track ended event
+    this.player.on('ended', () => {
+      this.analytics.track('ended', {
+        currentTime: this.player.currentTime(),
+        duration: this.player.duration(),
+      });
+    });
+    
+    // Track error event
+    this.player.on('error', () => {
+      const error = this.player.error();
+      this.analytics.track('error', {
+        currentTime: this.player.currentTime(),
+        duration: this.player.duration(),
+        errorMessage: error ? `${error.code}: ${error.message}` : 'Unknown error',
+      });
+    });
+    
+    // Track waiting/buffering event
+    this.player.on('waiting', () => {
+      this.analytics.track('buffer', {
+        currentTime: this.player.currentTime(),
+        duration: this.player.duration(),
+      });
+    });
+    
+    console.log('VSRCPlayer: Analytics initialized (always enabled)');
   }
 
   /**
@@ -285,6 +485,12 @@ class VSRCPlayer {
    */
   dispose() {
     this._stopProbing();
+    
+    // Dispose analytics
+    if (this.analytics) {
+      this.analytics.destroy();
+      this.analytics = null;
+    }
     
     // Dispose chat if initialized
     if (this.chat) {
