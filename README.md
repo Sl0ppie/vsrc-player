@@ -7,6 +7,7 @@ An HTML5 video player built on top of video.js, with enhanced support for both V
 - 🎬 **VOD Support** - Full support for Video on Demand playback
 - 📡 **Live Streaming** - HLS (HTTP Live Streaming) with automatic M3U8 probing
 - 🔄 **Smart Probing** - Automatically probe for M3U8 files at configurable intervals
+- 💬 **Live Chat** - WebSocket-based real-time chat with configurable color palette
 - 🎯 **Easy API** - Simple, intuitive JavaScript API
 - 📱 **Responsive** - Fluid player that adapts to any screen size
 - ⚡ **Event-Driven** - Rich callback system for lifecycle events
@@ -61,6 +62,51 @@ const player = new VSRCPlayer('#my-player', {
     }
 });
 ```
+
+### Live Chat Integration
+
+```javascript
+// Initialize chat alongside your video player
+const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    src: 'https://example.com/stream/playlist.m3u8',
+    chat: {
+        element: '#chat-container',
+        serverUrl: 'ws://localhost:8080',
+        username: 'User123',
+        colors: {
+            background: '#1f1f1f',
+            inputBackground: '#2a2a2a',
+            userMessage: '#0e4c92',
+            otherMessage: '#2a2a2a',
+            systemMessage: '#666',
+            text: '#ffffff',
+            border: '#3a3a3a'
+        },
+        onMessage: (data) => {
+            console.log('New message:', data);
+        },
+        onConnect: () => {
+            console.log('Connected to chat');
+        }
+    },
+    onReady: (player) => {
+        console.log('Player ready with chat');
+    }
+});
+
+// Access chat via player
+const chat = player.getChat();
+```
+
+**Chat Backend Setup:**
+
+```bash
+cd chat_backend
+npm install
+npm start  # Starts WebSocket server on port 8080
+```
+
 
 ## Configuration Options
 
@@ -119,6 +165,7 @@ The `examples/` directory contains comprehensive demonstrations:
 - **VOD Example** (`examples/vod/`) - Basic video on demand playback
 - **Live Streaming** (`examples/live/`) - HLS streaming with M3U8 probing
 - **Advanced Features** (`examples/advanced/`) - Full API demonstration
+- **Live Chat** (`examples/chat/`) - Real-time chat with WebSocket integration
 
 To view examples:
 
@@ -139,6 +186,67 @@ This is useful for:
 - Starting playback when a live stream becomes available
 - Handling streams that start at scheduled times
 - Graceful degradation when streams are unavailable
+
+## Live Chat
+
+VSRCPlayer includes an optional WebSocket-based chat component for live streaming scenarios, similar to YouTube Live or Twitch.
+
+### Features
+
+- Real-time messaging via WebSockets
+- Configurable color palette
+- Responsive layout (chat appears alongside video)
+- Auto-reconnect on disconnect
+- Customizable usernames
+- System messages for user join/leave events
+
+### Setup
+
+1. **Start the chat backend:**
+   ```bash
+   cd chat_backend
+   npm install
+   npm start
+   ```
+
+2. **Include the chat client:**
+   ```html
+   <script src="src/vsrc-chat.js"></script>
+   ```
+
+3. **Initialize the chat:**
+   ```javascript
+   const player = new VSRCPlayer('#my-player', {
+       type: 'live',
+       src: 'https://example.com/stream.m3u8',
+       chat: {
+           element: '#chat-container',
+           serverUrl: 'ws://localhost:8080',
+           username: 'MyUsername',
+           colors: {
+               background: '#1f1f1f',
+               userMessage: '#0e4c92',
+               // ... other colors
+           }
+       }
+   });
+   ```
+
+### Chat API
+
+```javascript
+// Get chat instance from player
+const chat = player.getChat();
+
+// Chat methods
+chat.sendMessage('Hello!')      // Send a message
+chat.setUsername('NewName')     // Update username
+chat.clearMessages()            // Clear chat history
+chat.updateColors({ ... })      // Update color palette
+chat.disconnect()               // Disconnect from server
+```
+
+See `examples/chat/` for a complete working example.
 
 ## Development
 

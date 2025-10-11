@@ -1,0 +1,15 @@
+{
+  "name": "vsrc-chat-backend",
+  "version": "1.0.0",
+  "description": "WebSocket-based chat backend for VSRCPlayer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["websocket", "chat", "live-streaming"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

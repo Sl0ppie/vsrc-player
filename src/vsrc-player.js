@@ -18,6 +18,11 @@ class VSRCPlayer {
    * @param {Function} options.onError - Callback when error occurs
    * @param {Function} options.onProbeSuccess - Callback when m3u8 probe succeeds
    * @param {Function} options.onProbeFailed - Callback when m3u8 probe fails
+   * @param {Object|boolean} options.chat - Chat configuration or false to disable
+   * @param {string|Element} options.chat.element - Chat container element or selector
+   * @param {string} options.chat.serverUrl - WebSocket server URL
+   * @param {string} options.chat.username - Username for chat
+   * @param {Object} options.chat.colors - Chat color palette
    */
   constructor(element, options = {}) {
     this.element = typeof element === 'string' ? document.querySelector(element) : element;
@@ -30,10 +35,12 @@ class VSRCPlayer {
       onError: options.onError || (() => {}),
       onProbeSuccess: options.onProbeSuccess || (() => {}),
       onProbeFailed: options.onProbeFailed || (() => {}),
+      chat: options.chat || false,
       ...options
     };
 
     this.player = null;
+    this.chat = null;
     this.probeTimer = null;
     this.probeAttempts = 0;
     this.isProbing = false;
@@ -60,6 +67,12 @@ class VSRCPlayer {
     // Initialize video.js
     this.player = videojs(this.element, vjsOptions, () => {
       console.log('VSRCPlayer: Player initialized');
+      
+      // Initialize chat if configured
+      if (this.options.chat) {
+        this._initChat();
+      }
+      
       this.options.onReady(this);
     });
 
@@ -75,6 +88,37 @@ class VSRCPlayer {
     } else if (this.options.src) {
       // For VOD, just set the source
       this.setSource(this.options.src);
+    }
+  }
+
+  /**
+   * Initialize chat component
+   * @private
+   */
+  _initChat() {
+    // Load VSRCChat dynamically if available
+    if (typeof VSRCChat === 'undefined') {
+      console.warn('VSRCPlayer: VSRCChat not loaded. Include vsrc-chat.js to enable chat.');
+      return;
+    }
+
+    if (!this.options.chat.element) {
+      console.error('VSRCPlayer: Chat element not specified in options.chat.element');
+      return;
+    }
+
+    try {
+      this.chat = new VSRCChat(this.options.chat.element, {
+        serverUrl: this.options.chat.serverUrl,
+        username: this.options.chat.username,
+        colors: this.options.chat.colors,
+        onMessage: this.options.chat.onMessage,
+        onConnect: this.options.chat.onConnect,
+        onDisconnect: this.options.chat.onDisconnect
+      });
+      console.log('VSRCPlayer: Chat initialized');
+    } catch (error) {
+      console.error('VSRCPlayer: Failed to initialize chat', error);
     }
   }
 
@@ -241,6 +285,13 @@ class VSRCPlayer {
    */
   dispose() {
     this._stopProbing();
+    
+    // Dispose chat if initialized
+    if (this.chat) {
+      this.chat.disconnect();
+      this.chat = null;
+    }
+    
     if (this.player) {
       this.player.dispose();
       this.player = null;
@@ -253,6 +304,14 @@ class VSRCPlayer {
    */
   getPlayer() {
     return this.player;
+  }
+
+  /**
+   * Get the chat instance
+   * @returns {Object} VSRCChat instance or null
+   */
+  getChat() {
+    return this.chat;
   }
 }
 
