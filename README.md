@@ -67,25 +67,36 @@ const player = new VSRCPlayer('#my-player', {
 
 ```javascript
 // Initialize chat alongside your video player
-const chat = new VSRCChat('#chat-container', {
-    serverUrl: 'ws://localhost:8080',
-    username: 'User123',
-    colors: {
-        background: '#1f1f1f',
-        inputBackground: '#2a2a2a',
-        userMessage: '#0e4c92',
-        otherMessage: '#2a2a2a',
-        systemMessage: '#666',
-        text: '#ffffff',
-        border: '#3a3a3a'
+const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    src: 'https://example.com/stream/playlist.m3u8',
+    chat: {
+        element: '#chat-container',
+        serverUrl: 'ws://localhost:8080',
+        username: 'User123',
+        colors: {
+            background: '#1f1f1f',
+            inputBackground: '#2a2a2a',
+            userMessage: '#0e4c92',
+            otherMessage: '#2a2a2a',
+            systemMessage: '#666',
+            text: '#ffffff',
+            border: '#3a3a3a'
+        },
+        onMessage: (data) => {
+            console.log('New message:', data);
+        },
+        onConnect: () => {
+            console.log('Connected to chat');
+        }
     },
-    onMessage: (data) => {
-        console.log('New message:', data);
-    },
-    onConnect: () => {
-        console.log('Connected to chat');
+    onReady: (player) => {
+        console.log('Player ready with chat');
     }
 });
+
+// Access chat via player
+const chat = player.getChat();
 ```
 
 **Chat Backend Setup:**
@@ -205,13 +216,18 @@ VSRCPlayer includes an optional WebSocket-based chat component for live streamin
 
 3. **Initialize the chat:**
    ```javascript
-   const chat = new VSRCChat('#chat-container', {
-       serverUrl: 'ws://localhost:8080',
-       username: 'MyUsername',
-       colors: {
-           background: '#1f1f1f',
-           userMessage: '#0e4c92',
-           // ... other colors
+   const player = new VSRCPlayer('#my-player', {
+       type: 'live',
+       src: 'https://example.com/stream.m3u8',
+       chat: {
+           element: '#chat-container',
+           serverUrl: 'ws://localhost:8080',
+           username: 'MyUsername',
+           colors: {
+               background: '#1f1f1f',
+               userMessage: '#0e4c92',
+               // ... other colors
+           }
        }
    });
    ```
@@ -219,6 +235,10 @@ VSRCPlayer includes an optional WebSocket-based chat component for live streamin
 ### Chat API
 
 ```javascript
+// Get chat instance from player
+const chat = player.getChat();
+
+// Chat methods
 chat.sendMessage('Hello!')      // Send a message
 chat.setUsername('NewName')     // Update username
 chat.clearMessages()            // Clear chat history

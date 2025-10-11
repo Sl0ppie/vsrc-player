@@ -246,35 +246,37 @@
         </ul>
         
         <h3>Code Example:</h3>
-        <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>// Initialize the video player
+        <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;"><code>// Initialize the video player with integrated chat
 const player = new VSRCPlayer('#chat-player', {
     type: 'live',
     src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+    chat: {
+        element: '#chat-container',
+        serverUrl: 'ws://localhost:8080',
+        username: 'User123',
+        colors: {
+            background: '#1f1f1f',
+            inputBackground: '#2a2a2a',
+            userMessage: '#0e4c92',
+            otherMessage: '#2a2a2a',
+            systemMessage: '#666',
+            text: '#ffffff',
+            border: '#3a3a3a'
+        },
+        onMessage: (data) => {
+            console.log('New message:', data);
+        },
+        onConnect: () => {
+            console.log('Connected to chat');
+        }
+    },
     onReady: (player) => {
         console.log('Player ready');
     }
 });
 
-// Initialize the chat
-const chat = new VSRCChat('#chat-container', {
-    serverUrl: 'ws://localhost:8080',
-    username: 'User123',
-    colors: {
-        background: '#1f1f1f',
-        inputBackground: '#2a2a2a',
-        userMessage: '#0e4c92',
-        otherMessage: '#2a2a2a',
-        systemMessage: '#666',
-        text: '#ffffff',
-        border: '#3a3a3a'
-    },
-    onMessage: (data) => {
-        console.log('New message:', data);
-    },
-    onConnect: () => {
-        console.log('Connected to chat');
-    }
-});</code></pre>
+// Access chat via player
+const chat = player.getChat();</code></pre>
     </div>
 
     <div class="container">
@@ -305,16 +307,40 @@ const chat = new VSRCChat('#chat-container', {
     
     <script>
         let player;
-        let chat;
 
         function updateStatus(message) {
             document.getElementById('status').textContent = 'Status: ' + message;
         }
 
-        // Initialize the video player
+        // Initialize the video player with integrated chat
         player = new VSRCPlayer('#chat-player', {
             type: 'live',
             src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
+            chat: {
+                element: '#chat-container',
+                serverUrl: 'ws://localhost:8080',
+                username: document.getElementById('username').value,
+                colors: {
+                    background: '#1f1f1f',
+                    inputBackground: '#2a2a2a',
+                    userMessage: '#0e4c92',
+                    otherMessage: '#2a2a2a',
+                    systemMessage: '#666',
+                    text: '#ffffff',
+                    border: '#3a3a3a'
+                },
+                onMessage: (data) => {
+                    console.log('New message:', data);
+                },
+                onConnect: () => {
+                    console.log('Connected to chat server');
+                    updateStatus('Ready - Player and chat connected');
+                },
+                onDisconnect: () => {
+                    console.log('Disconnected from chat server');
+                    updateStatus('Chat disconnected - Attempting to reconnect...');
+                }
+            },
             onReady: (playerInstance) => {
                 console.log('VSRCPlayer is ready');
                 updateStatus('Player ready - Chat initializing...');
@@ -325,37 +351,14 @@ const chat = new VSRCChat('#chat-container', {
             }
         });
 
-        // Initialize the chat
-        chat = new VSRCChat('#chat-container', {
-            serverUrl: 'ws://localhost:8080',
-            username: document.getElementById('username').value,
-            colors: {
-                background: '#1f1f1f',
-                inputBackground: '#2a2a2a',
-                userMessage: '#0e4c92',
-                otherMessage: '#2a2a2a',
-                systemMessage: '#666',
-                text: '#ffffff',
-                border: '#3a3a3a'
-            },
-            onMessage: (data) => {
-                console.log('New message:', data);
-            },
-            onConnect: () => {
-                console.log('Connected to chat server');
-                updateStatus('Ready - Player and chat connected');
-            },
-            onDisconnect: () => {
-                console.log('Disconnected from chat server');
-                updateStatus('Chat disconnected - Attempting to reconnect...');
-            }
-        });
-
         // Update username
         function updateUsername() {
             const newUsername = document.getElementById('username').value;
-            chat.setUsername(newUsername);
-            console.log('Username updated to:', newUsername);
+            const chat = player.getChat();
+            if (chat) {
+                chat.setUsername(newUsername);
+                console.log('Username updated to:', newUsername);
+            }
         }
 
         // Update colors
@@ -370,8 +373,11 @@ const chat = new VSRCChat('#chat-container', {
                 border: document.getElementById('colorBorder').value
             };
             
-            chat.updateColors(colors);
-            console.log('Colors updated:', colors);
+            const chat = player.getChat();
+            if (chat) {
+                chat.updateColors(colors);
+                console.log('Colors updated:', colors);
+            }
         }
 
         // Send a test message
@@ -385,7 +391,10 @@ const chat = new VSRCChat('#chat-container', {
             ];
             
             const randomMessage = testMessages[Math.floor(Math.random() * testMessages.length)];
-            chat.sendMessage(randomMessage);
+            const chat = player.getChat();
+            if (chat) {
+                chat.sendMessage(randomMessage);
+            }
         }
     </script>
 </body>

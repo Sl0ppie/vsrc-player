@@ -77,6 +77,46 @@ Include the script in your HTML:
 
 ### Basic Usage
 
+**Option 1: Integrated with VSRCPlayer (Recommended)**
+
+```javascript
+const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    src: 'https://example.com/stream.m3u8',
+    chat: {
+        element: '#chat-container',
+        serverUrl: 'ws://localhost:8080',
+        username: 'User123',
+        colors: {
+            background: '#1f1f1f',
+            inputBackground: '#2a2a2a',
+            userMessage: '#0e4c92',
+            otherMessage: '#2a2a2a',
+            systemMessage: '#666',
+            text: '#ffffff',
+            border: '#3a3a3a'
+        },
+        onMessage: (data) => {
+            console.log('New message:', data);
+        },
+        onConnect: () => {
+            console.log('Connected to chat');
+        },
+        onDisconnect: () => {
+            console.log('Disconnected from chat');
+        }
+    },
+    onReady: (player) => {
+        console.log('Player ready with chat');
+    }
+});
+
+// Access chat via player
+const chat = player.getChat();
+```
+
+**Option 2: Standalone (Advanced)**
+
 ```javascript
 const chat = new VSRCChat('#chat-container', {
     serverUrl: 'ws://localhost:8080',
@@ -103,6 +143,36 @@ const chat = new VSRCChat('#chat-container', {
 ```
 
 ### API Methods
+
+**When using with VSRCPlayer:**
+
+```javascript
+// Get chat instance from player
+const chat = player.getChat();
+
+// Send a message
+chat.sendMessage('Hello!');
+
+// Update username
+chat.setUsername('NewUsername');
+
+// Clear all messages
+chat.clearMessages();
+
+// Update color palette
+chat.updateColors({
+    userMessage: '#2563eb',
+    background: '#000000'
+});
+
+// Disconnect from server
+chat.disconnect();
+
+// Get all messages
+const messages = chat.getMessages();
+```
+
+**When using standalone:**
 
 ```javascript
 // Send a message
@@ -204,6 +274,26 @@ colors: {
 
 ### JavaScript Initialization
 
+**Integrated with VSRCPlayer (Recommended):**
+
+```javascript
+// Initialize player with chat
+const player = new VSRCPlayer('#player', {
+    type: 'live',
+    src: 'https://example.com/stream.m3u8',
+    chat: {
+        element: '#chat',
+        serverUrl: 'ws://localhost:8080',
+        username: 'User123'
+    }
+});
+
+// Access chat
+const chat = player.getChat();
+```
+
+**Standalone (Advanced):**
+
 ```javascript
 // Initialize player
 const player = new VSRCPlayer('#player', {
@@ -211,7 +301,7 @@ const player = new VSRCPlayer('#player', {
     src: 'https://example.com/stream.m3u8'
 });
 
-// Initialize chat
+// Initialize chat separately
 const chat = new VSRCChat('#chat', {
     serverUrl: 'ws://localhost:8080',
     username: 'User123'
