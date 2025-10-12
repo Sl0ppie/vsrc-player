@@ -6,9 +6,8 @@ import 'video.js/dist/video-js.css';
  * Always enabled, cannot be disabled, sends to api.vsrc.video
  */
 class AnalyticsReporter {
-  constructor(userId, mediaId) {
+  constructor(mediaId) {
     this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    this.userId = userId;
     this.mediaId = mediaId;
     this.wsUrl = 'wss://api.vsrc.video/ws/analytics';
     this.ajaxUrl = 'https://api.vsrc.video/api/analytics/event';
@@ -87,7 +86,6 @@ class AnalyticsReporter {
   track(eventType, data = {}) {
     const event = {
       sessionId: this.sessionId,
-      userId: this.userId,
       mediaId: this.mediaId,
       eventType,
       currentTime: data.currentTime,
@@ -141,15 +139,13 @@ class VSRCPlayer {
    * @param {string|Element} element - The video element or selector
    * @param {Object} options - Player options
    * @param {string} options.type - 'vod' or 'live'
-   * @param {string} options.src - Video source URL
+   * @param {string} options.mediaId - Media/video ID (required) - used to generate video source URL
    * @param {number} options.probeInterval - Interval for probing m3u8 (milliseconds, default: 5000)
    * @param {number} options.maxProbeAttempts - Maximum probe attempts (default: 12)
    * @param {Function} options.onReady - Callback when player is ready
    * @param {Function} options.onError - Callback when error occurs
    * @param {Function} options.onProbeSuccess - Callback when m3u8 probe succeeds
    * @param {Function} options.onProbeFailed - Callback when m3u8 probe fails
-   * @param {string} options.userId - User ID for analytics (optional)
-   * @param {string} options.mediaId - Media/video ID for analytics (optional)
    * @param {Object|boolean} options.chat - Chat configuration or false to disable
    * @param {string|Element} options.chat.element - Chat container element or selector
    * @param {string} options.chat.serverUrl - WebSocket server URL
@@ -159,9 +155,19 @@ class VSRCPlayer {
    */
   constructor(element, options = {}) {
     this.element = typeof element === 'string' ? document.querySelector(element) : element;
+    
+    // Validate required mediaId parameter
+    if (!options.mediaId) {
+      throw new Error('VSRCPlayer: mediaId is required');
+    }
+    
+    // Generate src from mediaId
+    const src = `//api.vsrc.video/hls/resolve/${options.mediaId}`;
+    
     this.options = {
       type: options.type || 'vod',
-      src: options.src || '',
+      src: src,
+      mediaId: options.mediaId,
       probeInterval: options.probeInterval || 5000,
       maxProbeAttempts: options.maxProbeAttempts || 12,
       onReady: options.onReady || (() => {}),
@@ -169,8 +175,6 @@ class VSRCPlayer {
       onProbeSuccess: options.onProbeSuccess || (() => {}),
       onProbeFailed: options.onProbeFailed || (() => {}),
       chat: options.chat || false,
-      userId: options.userId,
-      mediaId: options.mediaId,
       ...options
     };
 
@@ -236,7 +240,7 @@ class VSRCPlayer {
    */
   _initAnalytics() {
     // Create analytics reporter
-    this.analytics = new AnalyticsReporter(this.options.userId, this.options.mediaId);
+    this.analytics = new AnalyticsReporter(this.options.mediaId);
     
     // Track play event
     this.player.on('play', () => {

@@ -37,7 +37,7 @@ npm run build
     <script>
         const player = new VSRCPlayer('#my-player', {
             type: 'vod',
-            src: 'path/to/video.mp4',
+            mediaId: 'my-video-123',
             onReady: (player) => {
                 console.log('Player is ready!');
             }
@@ -52,7 +52,7 @@ npm run build
 ```javascript
 const player = new VSRCPlayer('#my-player', {
     type: 'live',
-    src: 'https://example.com/stream/playlist.m3u8',
+    mediaId: 'my-live-stream-456',
     probeInterval: 5000,        // Probe every 5 seconds
     maxProbeAttempts: 12,       // Maximum 12 attempts
     onProbeSuccess: (player) => {
@@ -70,9 +70,7 @@ const player = new VSRCPlayer('#my-player', {
 // Initialize chat alongside your video player
 const player = new VSRCPlayer('#my-player', {
     type: 'live',
-    src: 'https://example.com/stream/playlist.m3u8',
-    userId: 'user-123',           // Optional: for analytics tracking
-    mediaId: 'video-456',         // Optional: for analytics tracking
+    mediaId: 'video-456',         // Required: used to generate source URL
     chat: {
         element: '#chat-container',
         serverUrl: 'ws://localhost:8080',
@@ -116,9 +114,7 @@ npm start  # Starts WebSocket server on port 8080
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `type` | string | `'vod'` | Player type: `'vod'` or `'live'` |
-| `src` | string | `''` | Video source URL |
-| `userId` | string | `undefined` | User ID for analytics tracking (optional) |
-| `mediaId` | string | `undefined` | Media/video ID for analytics tracking (optional) |
+| `mediaId` | string | **required** | Media/video ID (required) - used to generate source URL: `//api.vsrc.video/hls/resolve/<mediaId>` |
 | `probeInterval` | number | `5000` | Probe interval in milliseconds (live only) |
 | `maxProbeAttempts` | number | `12` | Maximum probe attempts (live only) |
 | `onReady` | function | `null` | Callback when player is ready |
@@ -139,8 +135,7 @@ VSRCPlayer includes built-in analytics tracking that is **always enabled** and s
 
 Analytics data includes:
 - Session ID (automatically generated)
-- User ID (if provided via `userId` option)
-- Media ID (if provided via `mediaId` option)
+- Media ID (from `mediaId` parameter)
 - Event type
 - Current playback time
 - Video duration
