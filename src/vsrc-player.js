@@ -211,12 +211,12 @@ class VSRCPlayer {
         // Parse JSON response
         const data = await response.json();
         
-        // Extract the 'ul' key which contains the video URL
-        if (data && data.ul) {
-          console.log('VSRCPlayer: Resolved URL from JSON:', data.ul);
-          return data.ul;
+        // Extract the 'url' key which contains the video URL
+        if (data && data.url) {
+          console.log('VSRCPlayer: Resolved URL from JSON:', data.url);
+          return data.url;
         } else {
-          console.warn('VSRCPlayer: JSON response missing "ul" key, using original URL');
+          console.warn('VSRCPlayer: JSON response missing "url" key, using original URL');
           return url;
         }
       }
