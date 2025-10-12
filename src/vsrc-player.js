@@ -198,26 +198,31 @@ class VSRCPlayer {
     try {
       console.log('VSRCPlayer: Resolving URL:', url);
       
-      // Make request with redirect: 'manual' to check for redirects
+      // Make GET request with JSON content type
       const response = await fetch(url, { 
-        method: 'HEAD',
-        redirect: 'manual'
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
-      // Check if it's a redirect response (302, 301, 303, 307, 308)
-      if (response.type === 'opaqueredirect' || 
-          (response.status >= 301 && response.status <= 303) || 
-          (response.status >= 307 && response.status <= 308)) {
+      // Check if response is OK
+      if (response.ok) {
+        // Parse JSON response
+        const data = await response.json();
         
-        const location = response.headers.get('Location');
-        if (location) {
-          console.log('VSRCPlayer: Redirect detected, using Location:', location);
-          return location;
+        // Extract the 'ul' key which contains the video URL
+        if (data && data.ul) {
+          console.log('VSRCPlayer: Resolved URL from JSON:', data.ul);
+          return data.ul;
+        } else {
+          console.warn('VSRCPlayer: JSON response missing "ul" key, using original URL');
+          return url;
         }
       }
       
-      // No redirect, use the original URL
-      console.log('VSRCPlayer: No redirect, using original URL');
+      // If response not OK, use the original URL
+      console.log('VSRCPlayer: Response not OK, using original URL');
       return url;
     } catch (error) {
       console.warn('VSRCPlayer: Failed to resolve URL, using original:', error);

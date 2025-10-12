@@ -1,8 +1,8 @@
-# URL Resolution with Redirect Handling
+# URL Resolution with JSON Response
 
 ## Overview
 
-VSRCPlayer now automatically resolves the `/hls/resolve` URL endpoint to handle HTTP redirects (302, 301, 303, 307, 308) and use the final destination URL as the video source.
+VSRCPlayer now automatically resolves the `/hls/resolve` URL endpoint to get the actual video source URL from a JSON response.
 
 ## How It Works
 
@@ -11,11 +11,11 @@ VSRCPlayer now automatically resolves the `/hls/resolve` URL endpoint to handle 
    //api.vsrc.video/hls/resolve/{mediaId}
    ```
 
-2. **Automatic Resolution**: Before loading the video, the player makes a `fetch` request with `redirect: 'manual'` to check for redirects.
+2. **Automatic Resolution**: Before loading the video, the player makes a `fetch` request with `Content-Type: application/json` header.
 
-3. **Redirect Detection**: If the server responds with a redirect (status codes 301-303, 307-308), the player extracts the `Location` header and uses it as the actual video source.
+3. **JSON Response**: The server responds with a JSON object containing a `ul` key with the actual video URL.
 
-4. **Fallback**: If no redirect is detected or if the resolution fails, the player uses the original URL.
+4. **Fallback**: If the JSON response is missing the `ul` key or if the resolution fails, the player uses the original URL.
 
 ## Implementation Details
 
@@ -24,25 +24,30 @@ VSRCPlayer now automatically resolves the `/hls/resolve` URL endpoint to handle 
 ```javascript
 async _resolveUrl(url) {
   try {
-    // Make request with redirect: 'manual' to check for redirects
+    // Make GET request with JSON content type
     const response = await fetch(url, { 
-      method: 'HEAD',
-      redirect: 'manual'
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
-    // Check if it's a redirect response
-    if (response.type === 'opaqueredirect' || 
-        (response.status >= 301 && response.status <= 303) || 
-        (response.status >= 307 && response.status <= 308)) {
+    // Check if response is OK
+    if (response.ok) {
+      // Parse JSON response
+      const data = await response.json();
       
-      const location = response.headers.get('Location');
-      if (location) {
-        console.log('VSRCPlayer: Redirect detected, using Location:', location);
-        return location;
+      // Extract the 'ul' key which contains the video URL
+      if (data && data.ul) {
+        console.log('VSRCPlayer: Resolved URL from JSON:', data.ul);
+        return data.ul;
+      } else {
+        console.warn('VSRCPlayer: JSON response missing "ul" key, using original URL');
+        return url;
       }
     }
     
-    // No redirect, use the original URL
+    // If response not OK, use the original URL
     return url;
   } catch (error) {
     console.warn('VSRCPlayer: Failed to resolve URL, using original:', error);
@@ -53,7 +58,7 @@ async _resolveUrl(url) {
 
 ### New Property: `resolvedSrc`
 
-The player now has a `resolvedSrc` property that stores the resolved URL after redirect handling. This is used for both VOD and live streaming modes.
+The player now has a `resolvedSrc` property that stores the resolved URL from the JSON response. This is used for both VOD and live streaming modes.
 
 ### Updated Initialization Flow
 
@@ -66,8 +71,9 @@ The player now has a `resolvedSrc` property that stores the resolved URL after r
 The player now provides detailed console logs for URL resolution:
 
 - `VSRCPlayer: Resolving URL: {url}` - When starting URL resolution
-- `VSRCPlayer: Redirect detected, using Location: {location}` - When a redirect is found
-- `VSRCPlayer: No redirect, using original URL` - When no redirect is detected
+- `VSRCPlayer: Resolved URL from JSON: {url}` - When the URL is successfully resolved from JSON
+- `VSRCPlayer: JSON response missing "ul" key, using original URL` - When JSON response doesn't have the `ul` key
+- `VSRCPlayer: Response not OK, using original URL` - When the HTTP response is not OK
 - `VSRCPlayer: Failed to resolve URL, using original: {error}` - When resolution fails
 
 ## Example Usage
@@ -87,10 +93,10 @@ const player = new VSRCPlayer('#my-player', {
 
 ## Benefits
 
-1. **Transparent Redirects**: Automatically follows server-side URL redirects without requiring client-side configuration
-2. **CDN Support**: Enables dynamic CDN URL selection on the server side
-3. **Load Balancing**: Supports server-side load balancing via redirects
-4. **Backwards Compatible**: Works seamlessly with existing code - if there's no redirect, the original URL is used
+1. **Dynamic URL Resolution**: Automatically resolves video URLs from the API without requiring client-side configuration
+2. **CDN Support**: Enables dynamic CDN URL selection on the server side via JSON response
+3. **Load Balancing**: Supports server-side load balancing and URL selection
+4. **Backwards Compatible**: Works seamlessly with existing code - if the JSON response fails, the original URL is used as fallback
 
 ## Testing
 
