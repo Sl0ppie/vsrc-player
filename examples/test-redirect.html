@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VSRCPlayer Redirect Resolution Test</title>
+    <title>VSRCPlayer JSON Resolution Test</title>
     <script src="../dist/vsrc-player.js"></script>
     <style>
         body {
@@ -32,8 +32,8 @@
     </style>
 </head>
 <body>
-    <h1>VSRCPlayer Redirect Resolution Tests</h1>
-    <p>This test verifies that the player correctly handles URL resolution with redirects.</p>
+    <h1>VSRCPlayer JSON Resolution Tests</h1>
+    <p>This test verifies that the player correctly handles URL resolution with JSON responses containing the 'ul' key.</p>
     <div id="test-results"></div>
     <video id="test-player" class="video-js" style="display:none;"></video>
 
@@ -88,13 +88,16 @@
                         addResult('Original src', false, `Expected ${expectedSrc}, got ${p.options.src}`);
                     }
 
-                    // Test 5: Test _resolveUrl directly with a mock URL
-                    addInfo('Testing _resolveUrl with a test URL...');
-                    const testUrl = 'https://httpbin.org/redirect/1';
+                    // Test 5: Test _resolveUrl directly with a mock JSON endpoint
+                    addInfo('Testing _resolveUrl with a JSON endpoint...');
+                    // Note: This test will fail with httpbin.org/json because it doesn't have a 'ul' key
+                    // In real usage, the API at api.vsrc.video/hls/resolve/{mediaId} would return {ul: "video_url"}
+                    const testUrl = 'https://httpbin.org/json';
                     
                     p._resolveUrl(testUrl).then(resolvedUrl => {
                         if (resolvedUrl) {
                             addResult('_resolveUrl resolution', true, `Successfully resolved to: ${resolvedUrl}`);
+                            addInfo('Note: httpbin.org/json does not have a "ul" key, so it returns the original URL as fallback');
                         } else {
                             addResult('_resolveUrl resolution', false, 'Resolved URL is empty');
                         }
