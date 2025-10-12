@@ -150,10 +150,6 @@
                 <span class="info-value" id="session-id">-</span>
             </div>
             <div class="info-item">
-                <span class="info-label">User ID:</span>
-                <span class="info-value" id="user-id">demo-user-123</span>
-            </div>
-            <div class="info-item">
                 <span class="info-label">Media ID:</span>
                 <span class="info-value" id="media-id">demo-video-456</span>
             </div>
@@ -222,8 +218,6 @@
         
         const player = new VSRCPlayer('#analytics-player', {
             type: 'vod',
-            src: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8',
-            userId: 'demo-user-123',
             mediaId: 'demo-video-456',
             onReady: (playerInstance) => {
                 addLog('✓ Player ready with analytics enabled');

@@ -39,8 +39,7 @@ For each event, the following data is sent:
 ```javascript
 {
   sessionId: "session_1234567890_abc123",  // Auto-generated
-  userId: "user-123",                       // Optional
-  mediaId: "video-456",                     // Optional
+  mediaId: "video-456",                     // Required
   eventType: "play",
   currentTime: 10.5,
   duration: 120.0,
@@ -64,9 +63,7 @@ For each event, the following data is sent:
 ```javascript
 const player = new VSRCPlayer('#my-player', {
     type: 'vod',
-    src: 'https://example.com/video.mp4',
-    userId: 'user-123',      // Optional
-    mediaId: 'video-456'     // Optional
+    mediaId: 'video-456'     // Required - generates source URL
 });
 ```
 
@@ -75,9 +72,7 @@ const player = new VSRCPlayer('#my-player', {
 ```javascript
 const player = new VSRCPlayer('#my-player', {
     type: 'live',
-    src: 'https://example.com/stream.m3u8',
-    userId: 'authenticated-user-id',
-    mediaId: 'content-id-123',
+    mediaId: 'content-id-123',  // Required
     onReady: (player) => {
         console.log('Player ready with analytics enabled');
         console.log('Session ID:', player.analytics.sessionId);
@@ -101,7 +96,7 @@ Located at the top of `src/vsrc-player.js`:
 
 ### Integration Points
 
-1. **Constructor**: Added `userId` and `mediaId` options, initialized `this.analytics`
+1. **Constructor**: Added `mediaId` option (required), initialized `this.analytics`
 2. **_init()**: Calls `_initAnalytics()` after player initialization
 3. **_initAnalytics()**: Sets up event listeners for all tracked events
 4. **dispose()**: Calls `analytics.destroy()` for cleanup

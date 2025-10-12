@@ -217,18 +217,18 @@ player.dispose()
     <script>
         let player;
         
-        // Video sources
-        const videos = {
-            bigbuck: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-            tears: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
-            hls: 'https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8'
+        // Media IDs for different videos
+        const mediaIds = {
+            default: 'demo-video-456',
+            video1: 'demo-video-457',
+            video2: 'demo-video-458'
         };
 
         // Initialize the player
-        function initPlayer(src, type = 'vod') {
+        function initPlayer(mediaId, type = 'vod') {
             player = new VSRCPlayer('#advanced-player', {
                 type: type,
-                src: src,
+                mediaId: mediaId,
                 onReady: (playerInstance) => {
                     console.log('VSRCPlayer is ready');
                     updateStatus('Ready - Video loaded');
@@ -241,7 +241,7 @@ player.dispose()
         }
 
         // Initialize with default video
-        initPlayer(videos.bigbuck);
+        initPlayer(mediaIds.default);
 
         function updateStatus(message) {
             document.getElementById('status').textContent = 'Status: ' + message;
@@ -259,7 +259,7 @@ player.dispose()
         }
 
         function changeVideo(videoKey) {
-            const src = videos[videoKey];
+            const mediaId = mediaIds[videoKey === 'bigbuck' ? 'default' : (videoKey === 'tears' ? 'video1' : 'video2')];
             const type = videoKey === 'hls' ? 'live' : 'vod';
             
             // Dispose old player
@@ -268,7 +268,7 @@ player.dispose()
             }
             
             // Create new player
-            initPlayer(src, type);
+            initPlayer(mediaId, type);
             updateStatus(`Loading ${videoKey}...`);
         }
 
@@ -295,12 +295,11 @@ player.dispose()
         }
 
         function restartPlayer() {
-            const currentSrc = player.getPlayer().currentSrc();
+            const currentMediaId = player.options.mediaId;
+            const type = player.options.type;
             player.dispose();
             
-            // Determine type from source
-            const type = currentSrc.includes('.m3u8') ? 'live' : 'vod';
-            initPlayer(currentSrc, type);
+            initPlayer(currentMediaId, type);
         }
 
         // Update info display periodically
