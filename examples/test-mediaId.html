@@ -30,6 +30,7 @@
     <h1>VSRCPlayer mediaId Tests</h1>
     <div id="test-results"></div>
     <video id="test-player" class="video-js" style="display:none;"></video>
+    <video id="test-player-2" class="video-js" style="display:none;"></video>
 
     <script>
         const results = [];
@@ -61,7 +62,28 @@
         try {
             const player = new VSRCPlayer('#test-player', {
                 type: 'vod',
-                mediaId: 'test-video-123'
+                mediaId: 'test-video-123',
+                onReady: (p) => {
+                    // Test 3: AnalyticsReporter is created with mediaId
+                    if (p.analytics && p.analytics.mediaId === 'test-video-123') {
+                        addResult('Analytics mediaId', true, 'AnalyticsReporter has correct mediaId');
+                    } else {
+                        addResult('Analytics mediaId', false, `AnalyticsReporter mediaId is incorrect: ${p.analytics ? p.analytics.mediaId : 'no analytics'}`);
+                    }
+
+                    // Test 4: userId should not exist
+                    if (p.analytics && !('userId' in p.analytics)) {
+                        addResult('userId removed', true, 'userId property is not present in AnalyticsReporter');
+                    } else {
+                        addResult('userId removed', false, 'userId property still exists in AnalyticsReporter');
+                    }
+
+                    // Cleanup
+                    p.dispose();
+                    
+                    // Move to next test after analytics test completes
+                    runTest5();
+                }
             });
             
             const expectedSrc = '//api.vsrc.video/hls/resolve/test-video-123';
@@ -70,53 +92,44 @@
             } else {
                 addResult('Source URL generation', false, `Expected ${expectedSrc}, got ${player.options.src}`);
             }
-
-            // Test 3: AnalyticsReporter is created with mediaId
-            if (player.analytics && player.analytics.mediaId === 'test-video-123') {
-                addResult('Analytics mediaId', true, 'AnalyticsReporter has correct mediaId');
-            } else {
-                addResult('Analytics mediaId', false, 'AnalyticsReporter mediaId is incorrect');
-            }
-
-            // Test 4: userId should not exist
-            if (player.analytics.userId === undefined) {
-                addResult('userId removed', true, 'userId is not present in AnalyticsReporter');
-            } else {
-                addResult('userId removed', false, 'userId still exists in AnalyticsReporter');
-            }
-
-            // Cleanup
-            player.dispose();
         } catch (e) {
             addResult('Player initialization', false, `Error: ${e.message}`);
+            runTest5();
         }
 
         // Test 5: Different mediaId generates different URL
-        try {
-            const player2 = new VSRCPlayer('#test-player', {
-                type: 'live',
-                mediaId: 'live-stream-789'
-            });
-            
-            const expectedSrc2 = '//api.vsrc.video/hls/resolve/live-stream-789';
-            if (player2.options.src === expectedSrc2) {
-                addResult('Different mediaId', true, `Correctly generated: ${expectedSrc2}`);
-            } else {
-                addResult('Different mediaId', false, `Expected ${expectedSrc2}, got ${player2.options.src}`);
+        function runTest5() {
+            try {
+                const player2 = new VSRCPlayer('#test-player-2', {
+                    type: 'live',
+                    mediaId: 'live-stream-789',
+                    onReady: (p) => {
+                        p.dispose();
+                        showSummary();
+                    }
+                });
+                
+                const expectedSrc2 = '//api.vsrc.video/hls/resolve/live-stream-789';
+                if (player2.options.src === expectedSrc2) {
+                    addResult('Different mediaId', true, `Correctly generated: ${expectedSrc2}`);
+                } else {
+                    addResult('Different mediaId', false, `Expected ${expectedSrc2}, got ${player2.options.src}`);
+                }
+            } catch (e) {
+                addResult('Different mediaId', false, `Error: ${e.message}`);
+                showSummary();
             }
-
-            player2.dispose();
-        } catch (e) {
-            addResult('Different mediaId', false, `Error: ${e.message}`);
         }
 
         // Summary
-        const totalTests = results.length;
-        const passedTests = results.filter(r => r.passed).length;
-        const summary = document.createElement('div');
-        summary.className = `test-result ${passedTests === totalTests ? 'pass' : 'fail'}`;
-        summary.innerHTML = `<strong>Summary: ${passedTests}/${totalTests} tests passed</strong>`;
-        document.getElementById('test-results').appendChild(summary);
+        function showSummary() {
+            const totalTests = results.length;
+            const passedTests = results.filter(r => r.passed).length;
+            const summary = document.createElement('div');
+            summary.className = `test-result ${passedTests === totalTests ? 'pass' : 'fail'}`;
+            summary.innerHTML = `<strong>Summary: ${passedTests}/${totalTests} tests passed</strong>`;
+            document.getElementById('test-results').appendChild(summary);
+        }
     </script>
 </body>
 </html>
