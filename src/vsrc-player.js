@@ -162,11 +162,11 @@ class VSRCPlayer {
     }
     
     // Generate src from mediaId
-    const src = `//api.vsrc.video/hls/resolve/${options.mediaId}`;
+    const resolveUrl = `//api.vsrc.video/hls/resolve/${options.mediaId}`;
     
     this.options = {
       type: options.type || 'vod',
-      src: src,
+      src: resolveUrl,
       mediaId: options.mediaId,
       probeInterval: options.probeInterval || 5000,
       maxProbeAttempts: options.maxProbeAttempts || 12,
@@ -184,8 +184,45 @@ class VSRCPlayer {
     this.probeTimer = null;
     this.probeAttempts = 0;
     this.isProbing = false;
+    this.resolvedSrc = null;
 
     this._init();
+  }
+
+  /**
+   * Resolve the /hls/resolve URL to get the actual source URL
+   * @private
+   * @returns {Promise<string>} Resolved URL
+   */
+  async _resolveUrl(url) {
+    try {
+      console.log('VSRCPlayer: Resolving URL:', url);
+      
+      // Make request with redirect: 'manual' to check for redirects
+      const response = await fetch(url, { 
+        method: 'HEAD',
+        redirect: 'manual'
+      });
+
+      // Check if it's a redirect response (302, 301, 303, 307, 308)
+      if (response.type === 'opaqueredirect' || 
+          (response.status >= 301 && response.status <= 303) || 
+          (response.status >= 307 && response.status <= 308)) {
+        
+        const location = response.headers.get('Location');
+        if (location) {
+          console.log('VSRCPlayer: Redirect detected, using Location:', location);
+          return location;
+        }
+      }
+      
+      // No redirect, use the original URL
+      console.log('VSRCPlayer: No redirect, using original URL');
+      return url;
+    } catch (error) {
+      console.warn('VSRCPlayer: Failed to resolve URL, using original:', error);
+      return url;
+    }
   }
 
   /**
@@ -225,12 +262,22 @@ class VSRCPlayer {
       this.options.onError(error);
     });
 
-    // Handle live streaming with probing
-    if (this.options.type === 'live' && this.options.src) {
-      this._startProbing();
-    } else if (this.options.src) {
-      // For VOD, just set the source
-      this.setSource(this.options.src);
+    // Resolve the URL and then handle streaming
+    if (this.options.src) {
+      this._resolveUrl(this.options.src).then(resolvedUrl => {
+        this.resolvedSrc = resolvedUrl;
+        
+        // Handle live streaming with probing
+        if (this.options.type === 'live') {
+          this._startProbing();
+        } else {
+          // For VOD, just set the source
+          this.setSource(this.resolvedSrc);
+        }
+      }).catch(error => {
+        console.error('VSRCPlayer: Error resolving URL:', error);
+        this.options.onError(error);
+      });
     }
   }
 
@@ -350,14 +397,16 @@ class VSRCPlayer {
     this.probeAttempts++;
     console.log(`VSRCPlayer: Probe attempt ${this.probeAttempts}/${this.options.maxProbeAttempts}`);
 
-    fetch(this.options.src, { method: 'HEAD' })
+    const urlToProbe = this.resolvedSrc || this.options.src;
+
+    fetch(urlToProbe, { method: 'HEAD' })
       .then(response => {
         if (response.ok) {
           console.log('VSRCPlayer: Probe successful, starting playback');
           this.isProbing = false;
           this._stopProbing();
           this.options.onProbeSuccess(this);
-          this.setSource(this.options.src);
+          this.setSource(urlToProbe);
         } else {
           throw new Error(`HTTP ${response.status}`);
         }
