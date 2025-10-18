@@ -122,6 +122,36 @@ npm start  # Starts WebSocket server on port 8080
 | `onProbeSuccess` | function | `null` | Callback when M3U8 probe succeeds |
 | `onProbeFailed` | function | `null` | Callback when all probe attempts fail |
 
+### VHS (Adaptive Bitrate) Options
+
+VSRCPlayer exposes VideoJS HTTP Streaming (VHS) configuration options through the `vhs` parameter. These options control adaptive bitrate streaming behavior for multi-variant HLS streams.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `vhs.limitRenditionByPlayerDimensions` | boolean | `true` | Limit rendition selection by player size to avoid downloading unnecessarily high resolutions |
+| `vhs.enableLowInitialPlaylist` | boolean | `false` | Start with lowest bitrate playlist to reduce initial buffering time |
+| `vhs.useDevicePixelRatio` | boolean | `false` | Consider device pixel ratio for high-DPI displays (e.g., Retina displays) |
+| `vhs.bandwidth` | number | - | Initial bandwidth estimate in bits per second |
+| `vhs.useBandwidthFromLocalStorage` | boolean | `false` | Store and retrieve bandwidth estimates from localStorage |
+
+**Example with VHS options:**
+
+```javascript
+const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    mediaId: 'my-stream-123',
+    vhs: {
+        limitRenditionByPlayerDimensions: true,
+        enableLowInitialPlaylist: true,
+        useDevicePixelRatio: false,
+        bandwidth: 5000000  // 5 Mbps initial estimate
+    },
+    onReady: (player) => {
+        console.log('Player ready with adaptive bitrate streaming');
+    }
+});
+```
+
 ## Analytics
 
 VSRCPlayer includes built-in analytics tracking that is **always enabled** and sends data to `api.vsrc.video`. The following events are automatically tracked:
