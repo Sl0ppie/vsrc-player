@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adaptive Bitrate Test - VSRCPlayer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .video-container {
+            margin: 20px 0;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button.secondary {
+            background-color: #6c757d;
+        }
+        button.secondary:hover {
+            background-color: #545b62;
+        }
+        .info {
+            background-color: #e7f3ff;
+            padding: 15px;
+            border-left: 4px solid #007bff;
+            margin-top: 20px;
+        }
+        .success {
+            background-color: #d4edda;
+            padding: 15px;
+            border-left: 4px solid #28a745;
+            margin-top: 20px;
+        }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .quality-info {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        .quality-info h3 {
+            margin-top: 0;
+        }
+        .quality-indicator {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 4px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Adaptive Bitrate Streaming Test</h1>
+    
+    <div class="container">
+        <h2>Multi-Variant HLS Stream</h2>
+        <div class="info">
+            <strong>Test Description:</strong> This example demonstrates automatic variant switching in HLS streams.
+            The player will automatically select the best quality based on available bandwidth and player dimensions.
+        </div>
+        
+        <div class="success">
+            <strong>✓ Fixed:</strong> The player now properly exposes VHS configuration options, enabling 
+            adaptive bitrate streaming to work correctly with multi-variant HLS streams.
+        </div>
+        
+        <div class="video-container">
+            <video id="adaptive-player" class="video-js vjs-default-skin" controls></video>
+        </div>
+        
+        <div class="controls">
+            <button onclick="initPlayerWithDefaults()">Default Config</button>
+            <button onclick="initPlayerWithLowInitial()">Low Initial Playlist</button>
+            <button onclick="initPlayerWithoutDimLimit()">No Dimension Limit</button>
+            <button onclick="initPlayerWithDevicePixelRatio()">Use Device Pixel Ratio</button>
+            <button class="secondary" onclick="resizePlayer(640, 360)">Small (640x360)</button>
+            <button class="secondary" onclick="resizePlayer(1280, 720)">Large (1280x720)</button>
+            <button class="secondary" onclick="resizePlayer(1920, 1080)">Full HD (1920x1080)</button>
+        </div>
+        
+        <div class="quality-info">
+            <h3>Current Quality Information</h3>
+            <div>
+                <span class="quality-indicator" id="currentQuality">Detecting...</span>
+                <span id="qualityDetails">Initializing...</span>
+            </div>
+            <div style="margin-top: 10px;">
+                <strong>Player Size:</strong> <span id="playerSize">-</span><br>
+                <strong>Bandwidth Estimate:</strong> <span id="bandwidth">-</span><br>
+                <strong>Available Variants:</strong> <span id="variants">-</span>
+            </div>
+        </div>
+        
+        <div class="status" id="status">
+            Configuration: Default (limitRenditionByPlayerDimensions: true)
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>About Adaptive Bitrate Streaming</h2>
+        <p>Adaptive bitrate streaming automatically adjusts video quality based on:</p>
+        <ul>
+            <li><strong>Available Bandwidth:</strong> Measured during playback</li>
+            <li><strong>Player Dimensions:</strong> Prevents downloading unnecessarily high resolutions</li>
+            <li><strong>Device Pixel Ratio:</strong> Accounts for high-DPI displays</li>
+            <li><strong>Network Conditions:</strong> Switches to lower quality during congestion</li>
+        </ul>
+        
+        <h3>VHS Configuration Options</h3>
+        <p>The following options control adaptive bitrate behavior:</p>
+        
+        <h4>limitRenditionByPlayerDimensions (default: true)</h4>
+        <p>When enabled, the player considers the player size when selecting variants. This prevents 
+        downloading a 4K stream for a 480p player, saving bandwidth.</p>
+        <pre>const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    mediaId: 'my-stream',
+    vhs: {
+        limitRenditionByPlayerDimensions: true
+    }
+});</pre>
+
+        <h4>enableLowInitialPlaylist (default: false)</h4>
+        <p>When enabled, the player starts with the lowest bitrate variant, then adapts upward. 
+        This reduces initial buffering time.</p>
+        <pre>const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    mediaId: 'my-stream',
+    vhs: {
+        enableLowInitialPlaylist: true
+    }
+});</pre>
+
+        <h4>useDevicePixelRatio (default: false)</h4>
+        <p>When enabled, the player considers the device pixel ratio for high-DPI displays. 
+        A 540p player on a 2x display will allow 1080p variants.</p>
+        <pre>const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    mediaId: 'my-stream',
+    vhs: {
+        useDevicePixelRatio: true
+    }
+});</pre>
+
+        <h4>bandwidth</h4>
+        <p>Set an initial bandwidth estimate in bits per second. Useful if you know the user's connection speed.</p>
+        <pre>const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    mediaId: 'my-stream',
+    vhs: {
+        bandwidth: 5000000  // 5 Mbps
+    }
+});</pre>
+
+        <h4>useBandwidthFromLocalStorage (default: false)</h4>
+        <p>When enabled, bandwidth estimates are persisted in localStorage and reused across sessions.</p>
+        <pre>const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    mediaId: 'my-stream',
+    vhs: {
+        useBandwidthFromLocalStorage: true
+    }
+});</pre>
+    </div>
+
+    <!-- Load the VSRCPlayer library -->
+    <script src="../dist/vsrc-player.js"></script>
+    
+    <script>
+        let player;
+        let statusElement = document.getElementById('status');
+        let qualityUpdateInterval;
+
+        function initPlayerWithDefaults() {
+            disposePlayer();
+            updateStatus('Configuration: Default (limitRenditionByPlayerDimensions: true)');
+            
+            player = new VSRCPlayer('#adaptive-player', {
+                type: 'live',
+                mediaId: 'test-adaptive-stream-123',
+                vhs: {
+                    limitRenditionByPlayerDimensions: true
+                },
+                onReady: (playerInstance) => {
+                    console.log('Player ready with default VHS config');
+                    startQualityMonitoring();
+                },
+                onError: (error) => {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        function initPlayerWithLowInitial() {
+            disposePlayer();
+            updateStatus('Configuration: Low Initial Playlist (enableLowInitialPlaylist: true)');
+            
+            player = new VSRCPlayer('#adaptive-player', {
+                type: 'live',
+                mediaId: 'test-adaptive-stream-123',
+                vhs: {
+                    enableLowInitialPlaylist: true,
+                    limitRenditionByPlayerDimensions: true
+                },
+                onReady: (playerInstance) => {
+                    console.log('Player ready with low initial playlist');
+                    startQualityMonitoring();
+                },
+                onError: (error) => {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        function initPlayerWithoutDimLimit() {
+            disposePlayer();
+            updateStatus('Configuration: No Dimension Limit (limitRenditionByPlayerDimensions: false)');
+            
+            player = new VSRCPlayer('#adaptive-player', {
+                type: 'live',
+                mediaId: 'test-adaptive-stream-123',
+                vhs: {
+                    limitRenditionByPlayerDimensions: false
+                },
+                onReady: (playerInstance) => {
+                    console.log('Player ready without dimension limiting');
+                    startQualityMonitoring();
+                },
+                onError: (error) => {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        function initPlayerWithDevicePixelRatio() {
+            disposePlayer();
+            updateStatus('Configuration: Device Pixel Ratio (useDevicePixelRatio: true)');
+            
+            player = new VSRCPlayer('#adaptive-player', {
+                type: 'live',
+                mediaId: 'test-adaptive-stream-123',
+                vhs: {
+                    useDevicePixelRatio: true,
+                    limitRenditionByPlayerDimensions: true
+                },
+                onReady: (playerInstance) => {
+                    console.log('Player ready with device pixel ratio');
+                    startQualityMonitoring();
+                },
+                onError: (error) => {
+                    console.error('Error:', error);
+                }
+            });
+        }
+
+        function disposePlayer() {
+            if (qualityUpdateInterval) {
+                clearInterval(qualityUpdateInterval);
+                qualityUpdateInterval = null;
+            }
+            if (player) {
+                player.dispose();
+                player = null;
+            }
+        }
+
+        function resizePlayer(width, height) {
+            const videoElement = document.getElementById('adaptive-player');
+            if (videoElement) {
+                videoElement.style.width = width + 'px';
+                videoElement.style.height = height + 'px';
+                updatePlayerSize();
+            }
+        }
+
+        function updateStatus(message) {
+            statusElement.textContent = message;
+        }
+
+        function updatePlayerSize() {
+            const videoElement = document.getElementById('adaptive-player');
+            if (videoElement) {
+                document.getElementById('playerSize').textContent = 
+                    `${videoElement.clientWidth}x${videoElement.clientHeight}`;
+            }
+        }
+
+        function startQualityMonitoring() {
+            if (qualityUpdateInterval) {
+                clearInterval(qualityUpdateInterval);
+            }
+            
+            qualityUpdateInterval = setInterval(() => {
+                if (!player || !player.getPlayer()) return;
+                
+                const vjsPlayer = player.getPlayer();
+                const tech = vjsPlayer.tech({ IWillNotUseThisInPlugins: true });
+                
+                if (tech && tech.vhs) {
+                    const vhs = tech.vhs;
+                    
+                    // Update quality indicator
+                    const currentPlaylist = vhs.playlists.media();
+                    if (currentPlaylist) {
+                        const resolution = currentPlaylist.attributes.RESOLUTION;
+                        const bandwidth = Math.round(currentPlaylist.attributes.BANDWIDTH / 1000);
+                        
+                        if (resolution) {
+                            document.getElementById('currentQuality').textContent = 
+                                `${resolution.width}x${resolution.height}`;
+                            document.getElementById('qualityDetails').textContent = 
+                                `${bandwidth} kbps`;
+                        }
+                    }
+                    
+                    // Update bandwidth estimate
+                    const systemBandwidth = vhs.systemBandwidth;
+                    if (systemBandwidth) {
+                        document.getElementById('bandwidth').textContent = 
+                            `${Math.round(systemBandwidth / 1000)} kbps`;
+                    }
+                    
+                    // Update available variants
+                    const playlists = vhs.playlists.main.playlists;
+                    if (playlists && playlists.length) {
+                        const variantInfo = playlists.map(p => {
+                            const res = p.attributes.RESOLUTION;
+                            const bw = Math.round(p.attributes.BANDWIDTH / 1000);
+                            return res ? `${res.width}x${res.height} (${bw}kbps)` : `${bw}kbps`;
+                        }).join(', ');
+                        document.getElementById('variants').textContent = variantInfo;
+                    }
+                }
+                
+                updatePlayerSize();
+            }, 1000);
+        }
+
+        // Initialize with default configuration
+        initPlayerWithDefaults();
+    </script>
+</body>
+</html>

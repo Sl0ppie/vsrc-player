@@ -151,6 +151,12 @@ class VSRCPlayer {
    * @param {string} options.chat.serverUrl - WebSocket server URL
    * @param {string} options.chat.username - Username for chat
    * @param {Object} options.chat.colors - Chat color palette
+   * @param {Object} options.vhs - VHS (VideoJS HTTP Streaming) configuration options
+   * @param {boolean} options.vhs.limitRenditionByPlayerDimensions - Limit rendition selection by player size (default: true)
+   * @param {boolean} options.vhs.enableLowInitialPlaylist - Start with lowest bitrate playlist (default: false)
+   * @param {boolean} options.vhs.useDevicePixelRatio - Consider device pixel ratio for rendition selection (default: false)
+   * @param {number} options.vhs.bandwidth - Initial bandwidth estimate in bits per second
+   * @param {boolean} options.vhs.useBandwidthFromLocalStorage - Store/retrieve bandwidth from localStorage (default: false)
    * @note Analytics is always enabled and sends data to api.vsrc.video
    */
   constructor(element, options = {}) {
@@ -243,6 +249,14 @@ class VSRCPlayer {
       fluid: true,
       responsive: true,
       liveui: this.options.type === 'live',
+      html5: {
+        vhs: {
+          // Enable adaptive bitrate streaming by default
+          // Users can override these with options.vhs
+          limitRenditionByPlayerDimensions: true,
+          ...this.options.vhs
+        }
+      },
       ...this.options.vjsOptions
     };
 
