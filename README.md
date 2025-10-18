@@ -239,6 +239,26 @@ This is useful for:
 - Handling streams that start at scheduled times
 - Graceful degradation when streams are unavailable
 
+## Adaptive Bitrate Streaming
+
+VSRCPlayer fully supports adaptive bitrate streaming for multi-variant HLS streams. The player automatically switches between different quality variants based on available bandwidth and player dimensions.
+
+For detailed information about adaptive bitrate configuration, see the [Adaptive Bitrate Streaming Guide](docs/ADAPTIVE_BITRATE.md).
+
+Quick example:
+
+```javascript
+const player = new VSRCPlayer('#my-player', {
+    type: 'live',
+    mediaId: 'my-stream-123',
+    vhs: {
+        limitRenditionByPlayerDimensions: true,
+        enableLowInitialPlaylist: true,
+        useDevicePixelRatio: false
+    }
+});
+```
+
 ## Live Chat
 
 VSRCPlayer includes an optional WebSocket-based chat component for live streaming scenarios, similar to YouTube Live or Twitch.
