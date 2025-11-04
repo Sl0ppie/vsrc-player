@@ -64,6 +64,23 @@ const player = new VSRCPlayer('#my-player', {
 });
 ```
 
+### Debug Mode (Local Development)
+
+```javascript
+// Use debug parameter to point to local development server
+const player = new VSRCPlayer('#my-player', {
+    type: 'vod',
+    mediaId: 'my-video-123',
+    debug: 'localhost:3000',  // Replaces api.vsrc.video with localhost:3000
+    onReady: (player) => {
+        console.log('Player connected to debug server');
+        // Source URL: //localhost:3000/hls/resolve/my-video-123
+        // Analytics WebSocket: wss://localhost:3000/ws/analytics
+        // Analytics AJAX: https://localhost:3000/api/analytics/event
+    }
+});
+```
+
 ### Live Chat Integration
 
 ```javascript
@@ -115,6 +132,7 @@ npm start  # Starts WebSocket server on port 8080
 |--------|------|---------|-------------|
 | `type` | string | `'vod'` | Player type: `'vod'` or `'live'` |
 | `mediaId` | string | **required** | Media/video ID (required) - used to generate source URL: `//api.vsrc.video/hls/resolve/<mediaId>` |
+| `debug` | string | `null` | Debug host to replace `api.vsrc.video` in all URLs (e.g., `'localhost:3000'`) - useful for local development and testing |
 | `probeInterval` | number | `5000` | Probe interval in milliseconds (live only) |
 | `maxProbeAttempts` | number | `12` | Maximum probe attempts (live only) |
 | `onReady` | function | `null` | Callback when player is ready |

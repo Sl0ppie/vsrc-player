@@ -6,11 +6,12 @@ import 'video.js/dist/video-js.css';
  * Always enabled, cannot be disabled, sends to api.vsrc.video
  */
 class AnalyticsReporter {
-  constructor(mediaId) {
+  constructor(mediaId, debugHost = null) {
     this.sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     this.mediaId = mediaId;
-    this.wsUrl = 'wss://api.vsrc.video/ws/analytics';
-    this.ajaxUrl = 'https://api.vsrc.video/api/analytics/event';
+    const baseHost = debugHost || 'api.vsrc.video';
+    this.wsUrl = `wss://${baseHost}/ws/analytics`;
+    this.ajaxUrl = `https://${baseHost}/api/analytics/event`;
     this.ws = null;
     this.eventQueue = [];
     this.batchInterval = 5000; // 5 seconds
@@ -140,6 +141,7 @@ class VSRCPlayer {
    * @param {Object} options - Player options
    * @param {string} options.type - 'vod' or 'live'
    * @param {string} options.mediaId - Media/video ID (required) - used to generate video source URL
+   * @param {string} options.debug - Debug host to replace 'api.vsrc.video' (optional, e.g., 'localhost:3000')
    * @param {number} options.probeInterval - Interval for probing m3u8 (milliseconds, default: 5000)
    * @param {number} options.maxProbeAttempts - Maximum probe attempts (default: 12)
    * @param {Function} options.onReady - Callback when player is ready
@@ -167,13 +169,15 @@ class VSRCPlayer {
       throw new Error('VSRCPlayer: mediaId is required');
     }
     
-    // Generate src from mediaId
-    const resolveUrl = `//api.vsrc.video/hls/resolve/${options.mediaId}`;
+    // Generate src from mediaId, using debug host if provided
+    const baseHost = options.debug || 'api.vsrc.video';
+    const resolveUrl = `//${baseHost}/hls/resolve/${options.mediaId}`;
     
     this.options = {
       type: options.type || 'vod',
       src: resolveUrl,
       mediaId: options.mediaId,
+      debug: options.debug || null,
       probeInterval: options.probeInterval || 5000,
       maxProbeAttempts: options.maxProbeAttempts || 12,
       onReady: options.onReady || (() => {}),
@@ -306,7 +310,7 @@ class VSRCPlayer {
    */
   _initAnalytics() {
     // Create analytics reporter
-    this.analytics = new AnalyticsReporter(this.options.mediaId);
+    this.analytics = new AnalyticsReporter(this.options.mediaId, this.options.debug);
     
     // Track play event
     this.player.on('play', () => {
