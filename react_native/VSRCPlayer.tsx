@@ -1,6 +1,7 @@
 import React, { useRef, useImperativeHandle, forwardRef } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import { VSRC_PLAYER_BUNDLE } from './vsrc-player-bundle';
 
 /**
  * VSRCPlayer configuration options
@@ -244,8 +245,6 @@ const VSRCPlayer = forwardRef<VSRCPlayerRef, VSRCPlayerProps>(
       height: 100% !important;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/video.js@8.23.4/dist/video.min.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/video.js@8.23.4/dist/video-js.min.css" rel="stylesheet">
 </head>
 <body>
   <div id="player-container">
@@ -254,66 +253,74 @@ const VSRCPlayer = forwardRef<VSRCPlayerRef, VSRCPlayerProps>(
   </div>
   
   <script>
-    // VSRCPlayer wrapper code would be injected here
-    // For production, you would include the built vsrc-player.js
-    
+    ${VSRC_PLAYER_BUNDLE}
+  </script>
+  
+  <script>
     (function() {
-      // Simplified player initialization for WebView
-      const player = videojs('video-player', {
-        controls: true,
-        autoplay: false,
-        preload: 'auto',
-        fluid: true,
-        responsive: true,
-        liveui: ${options.type === 'live'},
-        html5: {
-          vhs: ${JSON.stringify(options.vhs || {})}
-        }
-      });
-      
-      // Set source
-      const baseHost = ${JSON.stringify(options.debug || 'api.vsrc.video')};
-      const resolveUrl = '//' + baseHost + '/hls/resolve/' + ${JSON.stringify(options.mediaId)};
-      
-      // Resolve URL and set source
-      fetch(resolveUrl)
-        .then(response => response.json())
-        .then(data => {
-          if (data && data.url) {
-            player.src({
-              src: data.url,
-              type: 'application/x-mpegURL'
-            });
-          }
-          
-          // Send ready message
+      // Initialize VSRCPlayer with options
+      const playerOptions = {
+        type: ${JSON.stringify(options.type || 'vod')},
+        mediaId: ${JSON.stringify(options.mediaId)},
+        debug: ${JSON.stringify(options.debug || null)},
+        probeInterval: ${options.probeInterval || 5000},
+        maxProbeAttempts: ${options.maxProbeAttempts || 12},
+        vhs: ${JSON.stringify(options.vhs || {})},
+        onReady: function(player) {
+          console.log('VSRCPlayer ready');
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'ready'
           }));
-        })
-        .catch(error => {
+        },
+        onError: function(error) {
+          console.error('VSRCPlayer error:', error);
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'error',
-            error: error.message
+            error: error.message || 'Unknown error'
           }));
-        });
+        },
+        onProbeSuccess: function(player) {
+          console.log('Probe successful');
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'probeSuccess'
+          }));
+        },
+        onProbeFailed: function(player) {
+          console.log('Probe failed');
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'probeFailed'
+          }));
+        }
+      };
       
-      // Store player instance globally
-      window.vsrcPlayer = player;
-      
-      // Setup event listeners
-      player.on('error', (error) => {
-        window.ReactNativeWebView.postMessage(JSON.stringify({
-          type: 'error',
-          error: player.error()
-        }));
-      });
-      
-      // Chat setup (if enabled)
+      // Add chat configuration if provided
       ${options.chat ? `
-      // Chat initialization would go here
-      // This requires the vsrc-chat.js module
+      playerOptions.chat = {
+        element: '#chat-container',
+        serverUrl: ${JSON.stringify(options.chat.serverUrl)},
+        username: ${JSON.stringify(options.chat.username)},
+        colors: ${JSON.stringify(options.chat.colors || {})},
+        onMessage: function(data) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'chatMessage',
+            data: data
+          }));
+        },
+        onConnect: function() {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'chatConnect'
+          }));
+        },
+        onDisconnect: function() {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'chatDisconnect'
+          }));
+        }
+      };
       ` : ''}
+      
+      // Initialize VSRCPlayer
+      window.vsrcPlayer = new VSRCPlayer('#video-player', playerOptions);
     })();
   </script>
 </body>
