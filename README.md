@@ -13,6 +13,27 @@ An HTML5 video player built on top of video.js, with enhanced support for both V
 - 📱 **Responsive** - Fluid player that adapts to any screen size
 - ⚡ **Event-Driven** - Rich callback system for lifecycle events
 - 🎨 **Customizable** - Full access to underlying video.js instance
+- ⚛️ **React Native Support** - Dedicated React Native wrapper component
+
+## React Native
+
+VSRCPlayer includes a React Native wrapper component for mobile app integration. See the [React Native documentation](./react_native/README.md) for detailed usage instructions.
+
+```tsx
+import { VSRCPlayer } from './react_native';
+
+function App() {
+  return (
+    <VSRCPlayer
+      options={{
+        type: 'vod',
+        mediaId: 'my-video-123'
+      }}
+      onReady={() => console.log('Player ready')}
+    />
+  );
+}
+```
 
 ## Installation
 

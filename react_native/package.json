@@ -1,0 +1,29 @@
+{
+  "name": "@vsrc-player/react-native",
+  "version": "1.0.0",
+  "description": "React Native wrapper for vsrc-player - HTML5 video player with VOD and live streaming support",
+  "main": "index.ts",
+  "types": "index.ts",
+  "keywords": [
+    "react-native",
+    "video",
+    "player",
+    "videojs",
+    "hls",
+    "streaming",
+    "vod",
+    "live",
+    "vsrc"
+  ],
+  "author": "",
+  "license": "ISC",
+  "peerDependencies": {
+    "react": ">=16.8.0",
+    "react-native": ">=0.60.0",
+    "react-native-webview": ">=11.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-native": "^0.70.0"
+  }
+}
